@@ -20,7 +20,6 @@
 
         .module-card { position: relative; overflow: hidden; display: flex; align-items: center; background: #111; border-radius: 16px; padding: 15px; cursor: pointer; border: 1px solid #222; transition: transform 0.1s; width: 100%; text-align: left; color: #fff; font-family: inherit; }
         .module-card:active { transform: scale(0.97); background: #1a1a1a; }
-        .mod-file-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
         .mod-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 22px; margin-right: 15px; z-index: 1;}
         .mod-text { z-index: 1; pointer-events: none; }
         .mod-text h3 { font-size: 16px; font-weight: 600; margin-bottom: 3px; color: #fff;}
@@ -226,7 +225,7 @@
                 </label>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 14px; font-weight: 600; color: #fff;">Structural X-Ray (Edge Map)</span>
+                <span style="font-size: 14px; font-weight: 600; color: #00ffff;">Incision X-Ray (Phase Edge)</span>
                 <label class="switch">
                     <input type="checkbox" id="topo-xray-toggle" onchange="App.toggleTopoXRay(this.checked)">
                     <span class="slider-switch round" style="background-color: #333;"></span>
@@ -337,7 +336,7 @@
                 <button class="matrix-btn ar-matrix-btn" id="ar-mat-LDS" onclick="App.setARMatrix('LDS')">LDS</button>
             </div>
             <button id="shutter-btn" onclick="App.captureAR()"></button>
-            <p class="ar-hint">Tap shutter to freeze frame and auto-nuke grain.</p>
+            <p class="ar-hint">Tap shutter to freeze frame and edit.</p>
         </div>
     </div>
 
@@ -549,8 +548,7 @@
                             this.rgPrepData = { exp: 100, cont: 100, bp: 0, sharp: 0 };
                             document.getElementById('rg-prep-exp').value = 100; document.getElementById('rg-prep-cont').value = 100;
                             document.getElementById('rg-prep-bp').value = 0; document.getElementById('rg-prep-sharp').value = 0;
-                            this.switch('state-retrogrid-prep'); 
-                            setTimeout(() => this.waitForDimensions(() => this.renderRGPrep(), 'rg-prep-touch-zone'), 100); 
+                            this.switch('state-retrogrid-prep'); setTimeout(() => this.waitForDimensions(() => this.renderRGPrep(), 'rg-prep-touch-zone'), 100); 
                         }
                     }; img.src = ev.target.result;
                 }; r.readAsDataURL(file); e.target.value = '';
@@ -560,7 +558,7 @@
                 let el = document.getElementById(elementId);
                 let rect = el.parentElement.getBoundingClientRect();
                 if(rect.width === 0) { requestAnimationFrame(() => this.waitForDimensions(fn, elementId)); } 
-                else { setTimeout(() => { if(this.module==='dp') this.resizeUICanvas(); fn(); }, 150); } 
+                else { setTimeout(() => { if(this.module==='dp') this.resizeUICanvas(); fn(); }, 50); } 
             },
 
             zoomMod(factor) { 
@@ -653,10 +651,10 @@
                 let std = isAR ? 0.02 + (this.intensity * 0.1) : 0.05 + (this.intensity * 0.2);
                 let icaDamp = 1.0 - this.icaDepth;
                 
-                // AR WASHOUT FIX: Strict clamp on standard deviation multiplier to max 5.0x
-                let m0 = Math.min(std/Math.sqrt(Math.max(D[0],0.0001)), 5.0);
-                let m1 = Math.min(std/Math.sqrt(Math.max(D[1],0.0001)), 5.0);
-                let m2 = Math.min(std/Math.sqrt(Math.max(D[2],0.0001)), 5.0);
+                // AR WASHOUT FIX: Strict clamp on variance multiplier to max 3.0x
+                let m0 = Math.min(std/Math.sqrt(Math.max(D[0],0.0001)), 3.0);
+                let m1 = Math.min(std/Math.sqrt(Math.max(D[1],0.0001)), 3.0);
+                let m2 = Math.min(std/Math.sqrt(Math.max(D[2],0.0001)), 3.0);
                 let Dinv = [[m0*icaDamp,0,0], [0,m1,0], [0,0,m2]];
                 
                 let T = this.mult(this.mult(V, Dinv), this.trans(V)); this.cache.T = T;
@@ -734,7 +732,7 @@
             // --- MODULE 2: TOPOLIGHT ---
             initTopo() {
                 if(!this.image || this.image.width === 0) return;
-                let w = this.image.width, h = this.image.height; const max = 800; // iOS Memory Safe
+                let w = this.image.width, h = this.image.height; const max = 800; // iOS Memory Safe Limit
                 if(w>max || h>max){ let r=w/h; if(r>1){w=max; h=max/r;} else {h=max; w=max*r;} } w=Math.floor(w); h=Math.floor(h);
                 
                 const tc=document.createElement('canvas'); tc.width=w; tc.height=h; const ctx=tc.getContext('2d', {willReadFrequently:true}); ctx.drawImage(this.image,0,0,w,h);
@@ -743,34 +741,34 @@
                 this.topoNormals = new Float32Array(w*h*3);
                 this.topoEdge = new Uint8ClampedArray(w*h);
                 
-                // NOISE GATE: 3-Pass Spatial Blur to melt rock grain
+                // NOISE GATE: 5-Pass Heavy Spatial Blur on Y Channel before calculating edges
                 const Y = new Float32Array(w*h);
                 for(let i=0; i<w*h; i++) Y[i] = (sourceData[i*4]*0.299 + sourceData[i*4+1]*0.587 + sourceData[i*4+2]*0.114);
                 let blur = new Float32Array(w*h); blur.set(Y);
-                for(let pass=0; pass<3; pass++) {
+                for(let pass=0; pass<5; pass++) {
                     let temp = new Float32Array(w*h);
                     for(let y=1; y<h-1; y++) { for(let x=1; x<w-1; x++) { let i = y*w+x;
                         temp[i] = (blur[i-w-1] + 2*blur[i-w] + blur[i-w+1] + 2*blur[i-1] + 4*blur[i] + 2*blur[i+1] + blur[i+w-1] + 2*blur[i+w] + blur[i+w+1])/16.0;
                     }} blur.set(temp);
                 }
 
-                let edgeFloats = new Float32Array(w*h); let maxE = 0, sumE = 0;
+                let edgeFloats = new Float32Array(w*h); let maxE = 0.001;
                 for(let y=1;y<h-1;y++){ for(let x=1;x<w-1;x++){ let i = y*w+x;
-                    // Normals (Crisp RAW Y)
+                    // Normals (Raw Y for shadows)
                     let dx = -1*Y[i-w-1] + 1*Y[i-w+1] - 2*Y[i-1] + 2*Y[i+1] - 1*Y[i+w-1] + 1*Y[i+w+1];
                     let dy = -1*Y[i-w-1] - 2*Y[i-w] - 1*Y[i-w+1] + 1*Y[i+w-1] + 2*Y[i+w] + 1*Y[i+w+1];
                     let dz = 255.0; let len=Math.sqrt(dx*dx+dy*dy+dz*dz); 
                     this.topoNormals[i*3]=dx/len; this.topoNormals[i*3+1]=dy/len; this.topoNormals[i*3+2]=dz/len;
-                    // Structural Edges (Blurred Y)
+                    
+                    // Structural Edges (Blurred Y for lines)
                     let edx = -1*blur[i-w-1] + 1*blur[i-w+1] - 2*blur[i-1] + 2*blur[i+1] - 1*blur[i+w-1] + 1*blur[i+w+1];
                     let edy = -1*blur[i-w-1] - 2*blur[i-w] - 1*blur[i-w+1] + 1*blur[i+w-1] + 2*blur[i+w] + 1*blur[i+w+1];
-                    let mag = Math.sqrt(edx*edx + edy*edy); edgeFloats[i] = mag; sumE += mag; if(mag>maxE) maxE=mag;
+                    let mag = Math.sqrt(edx*edx + edy*edy); edgeFloats[i] = mag; if(mag>maxE) maxE=mag;
                 }}
                 
-                // Edge Crush
-                let thresh = (sumE / (w*h)) * 1.5;
+                // EDGE NORMALIZATION FIX: Force max edge to 100% white, multiply by 2.0 to make faint lines pop
                 for(let i=0; i<w*h; i++) {
-                    this.topoEdge[i] = (edgeFloats[i] < thresh) ? 0 : Math.min(255, ((edgeFloats[i] - thresh)/(maxE - thresh)) * 255 * 2.5);
+                    this.topoEdge[i] = Math.min(255, (edgeFloats[i] / maxE) * 255 * 2.0);
                 }
                 
                 this.buildDP(); if(this.cache.valid) {
@@ -829,7 +827,9 @@
                 const iD = tcx.getImageData(0,0,w,h); const d = iD.data;
 
                 for(let i=0; i<d.length; i+=4) {
-                    for(let c=0; c<3; c++) { let v = d[i+c]; if(v < bp) v = 0; v *= exp; v = ((v/255 - 0.5) * cont + 0.5) * 255; d[i+c] = Math.max(0, Math.min(255, v)); }
+                    for(let c=0; c<3; c++) {
+                        let v = d[i+c]; if(v < bp) v = 0; v *= exp; v = ((v/255 - 0.5) * cont + 0.5) * 255; d[i+c] = Math.max(0, Math.min(255, v));
+                    }
                 }
                 
                 if (sharp > 0) {
@@ -842,7 +842,8 @@
                     }}
                 }
 
-                tcx.putImageData(iD,0,0); ctx.clearRect(0,0,c.width,c.height); ctx.save(); ctx.translate(c.width/2 + this.tx.px, c.height/2 + this.tx.py); ctx.scale(this.tx.s, this.tx.s);
+                tcx.putImageData(iD,0,0);
+                ctx.clearRect(0,0,c.width,c.height); ctx.save(); ctx.translate(c.width/2 + this.tx.px, c.height/2 + this.tx.py); ctx.scale(this.tx.s, this.tx.s);
                 let ir=w/h, sr=c.width/c.height, dw, dh; if(ir>sr) { dw=c.width; dh=c.width/ir; } else { dh=c.height; dw=c.height*ir; }
                 ctx.translate(-dw/2, -dh/2); ctx.drawImage(tc, 0, 0, dw, dh); ctx.restore();
             },
@@ -867,7 +868,7 @@
                 if(ch==='h') { let h=v/255*6, x=255*(1-Math.abs(h%2-1)); if(h<1)return[255,x,0]; if(h<2)return[x,255,0]; if(h<3)return[0,255,x]; if(h<4)return[0,x,255]; if(h<5)return[x,0,255]; return[255,0,x]; }
                 if(ch==='a') return [v, 255-v, 0]; 
                 if(ch==='b2') return [255-v, v, v]; 
-                if(ch==='edge') return [v, v, v]; // Professional X-Ray (White on black)
+                if(ch==='edge') return [v, v, v]; // Professional X-Ray
                 return [v,v,v]; 
             },
             initGrid() {
@@ -888,24 +889,23 @@
                     this.gridDict.y[j] = 0.299*R + 0.587*G + 0.114*B; this.gridDict.cb[j] = 128 - 0.1687*R - 0.3313*G + 0.5*B; this.gridDict.cr[j] = 128 + 0.5*R - 0.4187*G - 0.0813*B;
                 }
 
-                // X-RAY: Noise Gated Edge detection (Same as TopoLight)
+                // X-RAY: Noise Gated Edge detection
                 let blur = new Float32Array(w*h); blur.set(this.gridDict.y);
-                for(let pass=0; pass<3; pass++) {
+                for(let pass=0; pass<5; pass++) {
                     let temp = new Float32Array(w*h);
                     for(let y=1; y<h-1; y++) { for(let x=1; x<w-1; x++) { let i = y*w+x;
                         temp[i] = (blur[i-w-1] + 2*blur[i-w] + blur[i-w+1] + 2*blur[i-1] + 4*blur[i] + 2*blur[i+1] + blur[i+w-1] + 2*blur[i+w] + blur[i+w+1])/16.0;
                     }} blur.set(temp);
                 }
-                let edgeFloats = new Float32Array(w*h); let maxE = 0, sumE = 0;
+                let edgeFloats = new Float32Array(w*h); let maxE = 0.001;
                 for(let y=1; y<h-1; y++) {
                     for(let x=1; x<w-1; x++) { let i = y*w+x;
                         let edx = -1*blur[i-w-1] + 1*blur[i-w+1] - 2*blur[i-1] + 2*blur[i+1] - 1*blur[i+w-1] + 1*blur[i+w+1];
                         let edy = -1*blur[i-w-1] - 2*blur[i-w] - 1*blur[i-w+1] + 1*blur[i+w-1] + 2*blur[i+w] + 1*blur[i+w+1];
-                        let mag = Math.sqrt(edx*edx + edy*edy); edgeFloats[i] = mag; sumE += mag; if(mag>maxE) maxE=mag;
+                        let mag = Math.sqrt(edx*edx + edy*edy); edgeFloats[i] = mag; if(mag>maxE) maxE=mag;
                     }
                 }
-                let thresh = (sumE / (w*h)) * 1.5;
-                for(let i=0; i<w*h; i++) { this.gridDict.edge[i] = (edgeFloats[i] < thresh) ? 0 : Math.min(255, ((edgeFloats[i] - thresh)/(maxE - thresh)) * 255 * 2.5); }
+                for(let i=0; i<w*h; i++) { this.gridDict.edge[i] = Math.min(255, (edgeFloats[i]/maxE) * 255 * 2.0); }
 
                 this.gridW = w; this.gridH = h;
                 const gc = document.getElementById('grid-container'); gc.innerHTML = '';
@@ -991,14 +991,33 @@
 
             // --- AR LIVE ---
             openAR() {
-                this.activeModule = 'dp'; this.switch('state-ar'); this.setARMatrix('RAW'); CameraEngine.init(); this.arActive=true; this.arNeedsRecalc=true; setTimeout(() => { this.loopAR(); }, 500); 
+                this.activeModule = 'dp'; this.switch('state-ar'); this.setARMatrix('RAW'); CameraEngine.init(); this.arActive=true; setTimeout(() => { this.loopAR(); }, 500); 
             },
             closeAR() { this.arActive=false; CameraEngine.stop(); this.activeModule=null; this.switch('state-home'); },
             setARMatrix(m) {
                 document.querySelectorAll('.ar-matrix-btn').forEach(b=>b.classList.remove('active')); 
                 let btn = document.getElementById('ar-mat-'+m); if(btn) btn.classList.add('active'); 
                 this.mat = m;
-                if(m !== 'RAW') { this.arNeedsRecalc = true; GLEngine.isActive = true; } else { GLEngine.isActive = false; }
+                
+                if(m === 'RAW') {
+                    GLEngine.isActive = false;
+                    return;
+                }
+                
+                // DECOUPLED MATH: Delayed execution so UI doesn't freeze and button updates visually
+                setTimeout(() => {
+                    const video = CameraEngine.getVideoElement(); if(!video || video.videoWidth === 0) return;
+                    const c=document.createElement('canvas'); c.width=256; c.height=256; 
+                    let sW = video.videoWidth * 0.5, sH = video.videoHeight * 0.5;
+                    if(sW < 10) return; 
+                    c.getContext('2d').drawImage(video, video.videoWidth*0.25, video.videoHeight*0.25, sW, sH, 0, 0, 256, 256);
+                    
+                    let sp = (m==='LDS')?'LAB':(m==='RGB'||m==='CRGB')?'RGB':'YUV'; 
+                    this.calcMath(c.getContext('2d').getImageData(0,0,256,256).data, 256, 256, sp); 
+                    
+                    const canvas = document.getElementById('gl-canvas'); if(!GLEngine.gl) GLEngine.init(canvas); 
+                    this.applyDP(true);
+                }, 10);
             },
             loopAR() {
                 if(!this.arActive) return; const video = CameraEngine.getVideoElement();
@@ -1006,20 +1025,10 @@
                     const w = video.videoWidth, h = video.videoHeight;
                     const c = document.getElementById('gl-canvas'); if(c.width !== w) { c.width = w; c.height = h; }
                     
-                    if(this.mat !== 'RAW' && GLEngine.gl) {
-                        if(this.arNeedsRecalc) {
-                            const tempC = document.createElement('canvas'); tempC.width = 256; tempC.height = 256;
-                            tempC.getContext('2d').drawImage(video, w*0.25, h*0.25, w*0.5, h*0.5, 0, 0, 256, 256);
-                            let sp = (this.mat==='LDS')?'LAB':(this.mat==='RGB'||this.mat==='CRGB')?'RGB':'YUV';
-                            this.calcMath(tempC.getContext('2d').getImageData(0,0,256,256).data, 256, 256, sp); 
-                            if(!GLEngine.program) GLEngine.init(c); 
-                            this.applyDP(true); this.arNeedsRecalc = false;
-                        }
-                        if(this.cache.valid && !this.arNeedsRecalc) {
-                            if(!this.arVideoCanvas) { this.arVideoCanvas = document.createElement('canvas'); this.arCtx = this.arVideoCanvas.getContext('2d', {willReadFrequently: true}); }
-                            if(this.arVideoCanvas.width !== w) { this.arVideoCanvas.width = w; this.arVideoCanvas.height = h; }
-                            this.arCtx.drawImage(video, 0, 0, w, h); GLEngine.render(this.arVideoCanvas);
-                        }
+                    if(this.mat !== 'RAW' && GLEngine.gl && GLEngine.isActive && this.cache.valid) {
+                        if(!this.arVideoCanvas) { this.arVideoCanvas = document.createElement('canvas'); this.arCtx = this.arVideoCanvas.getContext('2d', {willReadFrequently: true}); }
+                        if(this.arVideoCanvas.width !== w) { this.arVideoCanvas.width = w; this.arVideoCanvas.height = h; }
+                        this.arCtx.drawImage(video, 0, 0, w, h); GLEngine.render(this.arVideoCanvas);
                     } else if(GLEngine.gl) { 
                         GLEngine.gl.viewport(0, 0, GLEngine.gl.canvas.width, GLEngine.gl.canvas.height); 
                         GLEngine.gl.clearColor(0,0,0,0); GLEngine.gl.clear(GLEngine.gl.COLOR_BUFFER_BIT); 
@@ -1032,7 +1041,7 @@
                 const r=video.getBoundingClientRect(), vR=w/h, cR=r.width/r.height; let dw=w, dh=h, sx=0, sy=0;
                 if(vR>cR) { dw=h*cR; sx=(w-dw)/2; } else { dh=w/cR; sy=(h-dh)/2; }
                 const c=document.createElement('canvas'); c.width=dw; c.height=dh; c.getContext('2d').drawImage(video, sx, sy, dw, dh, 0, 0, dw, dh);
-                this.image=c; this.arActive=false; CameraEngine.stop(); this.resetDP(); this.switch('state-editor'); setTimeout(()=> { this.resizeUICanvas(); this.renderDP(); this.runTextureNuke(); }, 150);
+                this.image=c; this.arActive=false; CameraEngine.stop(); this.resetDP(); this.switch('state-editor'); setTimeout(()=> { this.resizeUICanvas(); this.renderDP(); }, 150);
             }
         };
 
