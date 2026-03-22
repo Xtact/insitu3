@@ -226,7 +226,7 @@
                 </label>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 14px; font-weight: 600; color: #00ffff;">Incision X-Ray (Phase Edge)</span>
+                <span style="font-size: 14px; font-weight: 600; color: #fff;">Structural X-Ray (Edge Map)</span>
                 <label class="switch">
                     <input type="checkbox" id="topo-xray-toggle" onchange="App.toggleTopoXRay(this.checked)">
                     <span class="slider-switch round" style="background-color: #333;"></span>
@@ -408,19 +408,17 @@
             cache: { valid: false, T: null, means: [0,0,0], space: 'RGB' },
             hist: [], wandCol: null, isCmp: false, hasNuked: false, icaDepth: 0.0,
             
-            // TOPOLIGHT
-            topoNormals: null, topoL: {x: 0, y: 0, z: 1}, topoYRE: null, topoRaw: null, topoW: 0, topoH: 0, useYRE: false, topoExposure: 1.5, isLightDragging: false, topoXRay: false,
+            topoNormals: null, topoEdge: null, topoL: {x: 0, y: 0, z: 1}, topoYRE: null, topoRaw: null, topoW: 0, topoH: 0, useYRE: false, topoExposure: 1.5, isLightDragging: false, topoXRay: false,
             
-            // RETROGRID
             rgPrepData: null, gridDict: {}, activeGridChannel: null, gridW: 0, gridH: 0,
             gridChs: [
                 {id: 'edge', n: 'Structural X-Ray'}, {id: 'r', n: 'Red Channel'}, {id: 'g', n: 'Green Channel'}, {id: 'b', n: 'Blue Channel'}, 
-                {id: 'y', n: 'Luminance (YCbCr)'}, {id: 'h', n: 'Hue Map'}, {id: 's', n: 'Saturation'}, {id: 'v', n: 'Value'}, 
-                {id: 'l', n: 'Lightness (LAB)'}, {id: 'a', n: 'A-Band (Green/Red)'}, {id: 'b2', n: 'B-Band (Blue/Yellow)'}, {id: 'cb', n: 'Cb-Band'}, 
-                {id: 'cr', n: 'Cr-Band'}, {id: 'rg_ratio', n: 'Red/Green Index'}, {id: 'rb_ratio', n: 'Red/Blue Index'}, {id: 'gb_ratio', n: 'Green/Blue Index'}
+                {id: 'y', n: 'Luminance'}, {id: 'h', n: 'Hue Map'}, {id: 's', n: 'Saturation'}, {id: 'v', n: 'Value'}, 
+                {id: 'l', n: 'Lightness (LAB)'}, {id: 'a', n: 'A-Band'}, {id: 'b2', n: 'B-Band'}, {id: 'cb', n: 'Cb-Band'}, 
+                {id: 'cr', n: 'Cr-Band'}, {id: 'rg_ratio', n: 'R/G Index'}, {id: 'rb_ratio', n: 'R/B Index'}, {id: 'gb_ratio', n: 'G/B Index'}
             ],
             gridExposure: 1.0,
-            arActive: false, arVideoCanvas: null, arCtx: null,
+            arActive: false, arVideoCanvas: null, arCtx: null, arNeedsRecalc: false,
 
             init() {
                 this.bindPointer('dp-touch-zone', () => this.renderDP(), false);
@@ -545,15 +543,14 @@
                     const img = new Image();
                     img.onload = () => {
                         this.image = img; this.tx = { s: 1, px: 0, py: 0 }; 
-                        if(mod === 'dp') { this.resetDP(); this.switch('state-editor'); this.waitForDimensions(() => this.renderDP(), 'ui-canvas'); }
-                        if(mod === 'topo') { this.switch('state-topolight'); this.waitForDimensions(() => this.initTopo(), 'topo-touch-zone'); }
-                        
+                        if(mod === 'dp') { this.resetDP(); this.switch('state-editor'); setTimeout(() => this.waitForDimensions(() => this.renderDP(), 'ui-canvas'), 100); }
+                        if(mod === 'topo') { this.switch('state-topolight'); setTimeout(() => this.waitForDimensions(() => this.initTopo(), 'topo-touch-zone'), 100); }
                         if(mod === 'grid-prep') { 
                             this.rgPrepData = { exp: 100, cont: 100, bp: 0, sharp: 0 };
                             document.getElementById('rg-prep-exp').value = 100; document.getElementById('rg-prep-cont').value = 100;
                             document.getElementById('rg-prep-bp').value = 0; document.getElementById('rg-prep-sharp').value = 0;
                             this.switch('state-retrogrid-prep'); 
-                            this.waitForDimensions(() => this.renderRGPrep(), 'rg-prep-touch-zone'); 
+                            setTimeout(() => this.waitForDimensions(() => this.renderRGPrep(), 'rg-prep-touch-zone'), 100); 
                         }
                     }; img.src = ev.target.result;
                 }; r.readAsDataURL(file); e.target.value = '';
@@ -636,10 +633,6 @@
                 for (let i=0; i<n; i++) { let c0=cData[i*3]-means[0], c1=cData[i*3+1]-means[1], c2=cData[i*3+2]-means[2]; cov[0][0]+=c0*c0; cov[0][1]+=c0*c1; cov[0][2]+=c0*c2; cov[1][1]+=c1*c1; cov[1][2]+=c1*c2; cov[2][2]+=c2*c2; }
                 cov[0][0]/=n; cov[0][1]/=n; cov[0][2]/=n; cov[1][1]/=n; cov[1][2]/=n; cov[2][2]/=n; cov[1][0]=cov[0][1]; cov[2][0]=cov[0][2]; cov[2][1]=cov[1][2];
                 let { V, D } = this.eigen(cov); 
-                
-                // MATH FIX: Force variance floor in AR to prevent washout
-                if (this.arActive) { D[0] = Math.max(D[0], 0.005); D[1] = Math.max(D[1], 0.005); D[2] = Math.max(D[2], 0.005); }
-
                 this.cache = { valid: true, type: this.mat, means: means, V: V, D: D, space: sp };
             },
 
@@ -659,9 +652,14 @@
                 let { V, D, means, space } = this.cache; 
                 let std = isAR ? 0.02 + (this.intensity * 0.1) : 0.05 + (this.intensity * 0.2);
                 let icaDamp = 1.0 - this.icaDepth;
-                let Dinv = [[(std/Math.sqrt(Math.max(D[0],0.0001)))*icaDamp,0,0], [0,std/Math.sqrt(Math.max(D[1],0.0001)),0], [0,0,std/Math.sqrt(Math.max(D[2],0.0001))]];
-                let T = this.mult(this.mult(V, Dinv), this.trans(V)); this.cache.T = T;
                 
+                // AR WASHOUT FIX: Strict clamp on standard deviation multiplier to max 5.0x
+                let m0 = Math.min(std/Math.sqrt(Math.max(D[0],0.0001)), 5.0);
+                let m1 = Math.min(std/Math.sqrt(Math.max(D[1],0.0001)), 5.0);
+                let m2 = Math.min(std/Math.sqrt(Math.max(D[2],0.0001)), 5.0);
+                let Dinv = [[m0*icaDamp,0,0], [0,m1,0], [0,0,m2]];
+                
+                let T = this.mult(this.mult(V, Dinv), this.trans(V)); this.cache.T = T;
                 let tM = [0.5, (space==='RGB')?0.5:0.0, (space==='RGB')?0.5:0.0];
                 
                 if(isAR) {
@@ -670,7 +668,6 @@
                         GLEngine.currentChannelMeans = means; 
                         GLEngine.currentTargetMeans = tM; 
                         GLEngine.currentColorSpace = (space==='LAB')?2:(space==='YUV')?1:0; 
-                        GLEngine.isActive = true; 
                     } return;
                 }
                 this.renderDP();
@@ -737,36 +734,44 @@
             // --- MODULE 2: TOPOLIGHT ---
             initTopo() {
                 if(!this.image || this.image.width === 0) return;
-                
-                // TL iOS RAM FIX: Downscale to safe limits
-                let w = this.image.width, h = this.image.height; const max = 800;
+                let w = this.image.width, h = this.image.height; const max = 800; // iOS Memory Safe
                 if(w>max || h>max){ let r=w/h; if(r>1){w=max; h=max/r;} else {h=max; w=max*r;} } w=Math.floor(w); h=Math.floor(h);
                 
                 const tc=document.createElement('canvas'); tc.width=w; tc.height=h; const ctx=tc.getContext('2d', {willReadFrequently:true}); ctx.drawImage(this.image,0,0,w,h);
                 const sourceData = ctx.getImageData(0,0,w,h).data; 
                 this.topoRaw = new Uint8ClampedArray(sourceData);
                 this.topoNormals = new Float32Array(w*h*3);
+                this.topoEdge = new Uint8ClampedArray(w*h);
                 
-                // NOISE GATE: 3x3 Fast Spatial Blur on Y Channel before normal calc
+                // NOISE GATE: 3-Pass Spatial Blur to melt rock grain
                 const Y = new Float32Array(w*h);
-                for(let i=0; i<w*h; i++) Y[i] = (sourceData[i*4] + sourceData[i*4+1] + sourceData[i*4+2])/3.0;
-                
-                const bY = new Float32Array(w*h);
-                for(let y=0; y<h; y++){
-                    for(let x=0; x<w; x++){
-                        if(x===0||y===0||x===w-1||y===h-1) { bY[y*w+x] = Y[y*w+x]; continue; }
-                        let i = y*w+x;
-                        bY[i] = (Y[i-w-1] + 2*Y[i-w] + Y[i-w+1] + 2*Y[i-1] + 4*Y[i] + 2*Y[i+1] + Y[i+w-1] + 2*Y[i+w] + Y[i+w+1])/16.0;
-                    }
+                for(let i=0; i<w*h; i++) Y[i] = (sourceData[i*4]*0.299 + sourceData[i*4+1]*0.587 + sourceData[i*4+2]*0.114);
+                let blur = new Float32Array(w*h); blur.set(Y);
+                for(let pass=0; pass<3; pass++) {
+                    let temp = new Float32Array(w*h);
+                    for(let y=1; y<h-1; y++) { for(let x=1; x<w-1; x++) { let i = y*w+x;
+                        temp[i] = (blur[i-w-1] + 2*blur[i-w] + blur[i-w+1] + 2*blur[i-1] + 4*blur[i] + 2*blur[i+1] + blur[i+w-1] + 2*blur[i+w] + blur[i+w+1])/16.0;
+                    }} blur.set(temp);
                 }
 
-                for(let y=1;y<h-1;y++){ 
-                    for(let x=1;x<w-1;x++){
-                        let dx = -1*bY[(y-1)*w+(x-1)] + 1*bY[(y-1)*w+(x+1)] - 2*bY[y*w+(x-1)] + 2*bY[y*w+(x+1)] - 1*bY[(y+1)*w+(x-1)] + 1*bY[(y+1)*w+(x+1)];
-                        let dy = -1*bY[(y-1)*w+(x-1)] - 2*bY[(y-1)*w+x] - 1*bY[(y-1)*w+(x+1)] + 1*bY[(y+1)*w+(x-1)] + 2*bY[(y+1)*w+x] + 1*bY[(y+1)*w+(x+1)];
-                        dx*=0.5; dy*=0.5; let dz=255.0; let len=Math.sqrt(dx*dx+dy*dy+dz*dz); let i=(y*w+x)*3; 
-                        this.topoNormals[i]=dx/len; this.topoNormals[i+1]=dy/len; this.topoNormals[i+2]=dz/len;
+                let edgeFloats = new Float32Array(w*h); let maxE = 0, sumE = 0;
+                for(let y=1;y<h-1;y++){ for(let x=1;x<w-1;x++){ let i = y*w+x;
+                    // Normals (Crisp RAW Y)
+                    let dx = -1*Y[i-w-1] + 1*Y[i-w+1] - 2*Y[i-1] + 2*Y[i+1] - 1*Y[i+w-1] + 1*Y[i+w+1];
+                    let dy = -1*Y[i-w-1] - 2*Y[i-w] - 1*Y[i-w+1] + 1*Y[i+w-1] + 2*Y[i+w] + 1*Y[i+w+1];
+                    let dz = 255.0; let len=Math.sqrt(dx*dx+dy*dy+dz*dz); 
+                    this.topoNormals[i*3]=dx/len; this.topoNormals[i*3+1]=dy/len; this.topoNormals[i*3+2]=dz/len;
+                    // Structural Edges (Blurred Y)
+                    let edx = -1*blur[i-w-1] + 1*blur[i-w+1] - 2*blur[i-1] + 2*blur[i+1] - 1*blur[i+w-1] + 1*blur[i+w+1];
+                    let edy = -1*blur[i-w-1] - 2*blur[i-w] - 1*blur[i-w+1] + 1*blur[i+w-1] + 2*blur[i+w] + 1*blur[i+w+1];
+                    let mag = Math.sqrt(edx*edx + edy*edy); edgeFloats[i] = mag; sumE += mag; if(mag>maxE) maxE=mag;
                 }}
+                
+                // Edge Crush
+                let thresh = (sumE / (w*h)) * 1.5;
+                for(let i=0; i<w*h; i++) {
+                    this.topoEdge[i] = (edgeFloats[i] < thresh) ? 0 : Math.min(255, ((edgeFloats[i] - thresh)/(maxE - thresh)) * 255 * 2.5);
+                }
                 
                 this.buildDP(); if(this.cache.valid) {
                     let {V,D,means,space}=this.cache; let Dinv=[[0.15/Math.sqrt(Math.max(D[0],0.0001)),0,0],[0,0.15/Math.sqrt(Math.max(D[1],0.0001)),0],[0,0,0.15/Math.sqrt(Math.max(D[2],0.0001))]];
@@ -783,23 +788,17 @@
                 document.getElementById('topo-yre-toggle').checked = false; this.topoUseYRE = false; this.topoXRay = false; this.topoW = w; this.topoH = h; this.renderTopo();
             },
             renderTopo() {
-                if(!this.topoRaw || this.topoW === 0) return;
-                const c=document.getElementById('topo-canvas'); const pR=window.devicePixelRatio||1;
+                if(!this.topoRaw || this.topoW === 0) return; const c=document.getElementById('topo-canvas'); const pR=window.devicePixelRatio||1;
                 let rect=c.parentElement.getBoundingClientRect(); if(rect.width===0) rect={width:window.innerWidth, height:window.innerHeight}; c.width=Math.floor(rect.width*pR); c.height=Math.floor(rect.height*pR);
                 const dCtx=c.getContext('2d'); dCtx.clearRect(0,0,c.width,c.height);
                 
                 const tc=document.createElement('canvas'); tc.width=this.topoW; tc.height=this.topoH; const ctx=tc.getContext('2d'); const iD=ctx.createImageData(this.topoW, this.topoH); const d=iD.data;
                 const bd = (this.useYRE && this.topoYRE) ? this.topoYRE : this.topoRaw;
                 for(let i=0, n=0; i<d.length; i+=4, n+=3) {
-                    let nx = this.topoNormals[n], ny = this.topoNormals[n+1], nz = this.topoNormals[n+2];
-                    
                     if (this.topoXRay) { 
-                        // PROFESSIONAL X-RAY: Smooth Grayscale
-                        let edgeMag = Math.sqrt(nx*nx + ny*ny);
-                        let v = 0; if (edgeMag > 0.15) { v = Math.min(255, (edgeMag - 0.15) * 1000); }
-                        d[i] = v; d[i+1] = v; d[i+2] = v; d[i+3] = 255; 
+                        let v = this.topoEdge[i/4]; d[i] = v; d[i+1] = v; d[i+2] = v; d[i+3] = 255; 
                     } else {
-                        let int = Math.pow(Math.max(0, nx*this.topoL.x + ny*this.topoL.y + nz*this.topoL.z), 1.5);
+                        let int = Math.pow(Math.max(0, this.topoNormals[n]*this.topoL.x + this.topoNormals[n+1]*this.topoL.y + this.topoNormals[n+2]*this.topoL.z), 1.5);
                         d[i]=Math.min(255, bd[i]*int*this.topoExposure); d[i+1]=Math.min(255, bd[i+1]*int*this.topoExposure); d[i+2]=Math.min(255, bd[i+2]*int*this.topoExposure); d[i+3]=255;
                     }
                 }
@@ -830,9 +829,7 @@
                 const iD = tcx.getImageData(0,0,w,h); const d = iD.data;
 
                 for(let i=0; i<d.length; i+=4) {
-                    for(let c=0; c<3; c++) {
-                        let v = d[i+c]; if(v < bp) v = 0; v *= exp; v = ((v/255 - 0.5) * cont + 0.5) * 255; d[i+c] = Math.max(0, Math.min(255, v));
-                    }
+                    for(let c=0; c<3; c++) { let v = d[i+c]; if(v < bp) v = 0; v *= exp; v = ((v/255 - 0.5) * cont + 0.5) * 255; d[i+c] = Math.max(0, Math.min(255, v)); }
                 }
                 
                 if (sharp > 0) {
@@ -845,8 +842,7 @@
                     }}
                 }
 
-                tcx.putImageData(iD,0,0);
-                ctx.clearRect(0,0,c.width,c.height); ctx.save(); ctx.translate(c.width/2 + this.tx.px, c.height/2 + this.tx.py); ctx.scale(this.tx.s, this.tx.s);
+                tcx.putImageData(iD,0,0); ctx.clearRect(0,0,c.width,c.height); ctx.save(); ctx.translate(c.width/2 + this.tx.px, c.height/2 + this.tx.py); ctx.scale(this.tx.s, this.tx.s);
                 let ir=w/h, sr=c.width/c.height, dw, dh; if(ir>sr) { dw=c.width; dh=c.width/ir; } else { dh=c.height; dw=c.height*ir; }
                 ctx.translate(-dw/2, -dh/2); ctx.drawImage(tc, 0, 0, dw, dh); ctx.restore();
             },
@@ -871,7 +867,7 @@
                 if(ch==='h') { let h=v/255*6, x=255*(1-Math.abs(h%2-1)); if(h<1)return[255,x,0]; if(h<2)return[x,255,0]; if(h<3)return[0,255,x]; if(h<4)return[0,x,255]; if(h<5)return[x,0,255]; return[255,0,x]; }
                 if(ch==='a') return [v, 255-v, 0]; 
                 if(ch==='b2') return [255-v, v, v]; 
-                if(ch==='edge') return [v, v, v]; 
+                if(ch==='edge') return [v, v, v]; // Professional X-Ray (White on black)
                 return [v,v,v]; 
             },
             initGrid() {
@@ -892,23 +888,24 @@
                     this.gridDict.y[j] = 0.299*R + 0.587*G + 0.114*B; this.gridDict.cb[j] = 128 - 0.1687*R - 0.3313*G + 0.5*B; this.gridDict.cr[j] = 128 + 0.5*R - 0.4187*G - 0.0813*B;
                 }
 
-                // X-RAY: Noise Gated Edge detection
-                const bY = new Float32Array(w*h);
-                for(let y=0; y<h; y++){
-                    for(let x=0; x<w; x++){
-                        if(x===0||y===0||x===w-1||y===h-1) { bY[y*w+x] = this.gridDict.y[y*w+x]; continue; }
-                        let i = y*w+x;
-                        bY[i] = (this.gridDict.y[i-w-1] + 2*this.gridDict.y[i-w] + this.gridDict.y[i-w+1] + 2*this.gridDict.y[i-1] + 4*this.gridDict.y[i] + 2*this.gridDict.y[i+1] + this.gridDict.y[i+w-1] + 2*this.gridDict.y[i+w] + this.gridDict.y[i+w+1])/16.0;
+                // X-RAY: Noise Gated Edge detection (Same as TopoLight)
+                let blur = new Float32Array(w*h); blur.set(this.gridDict.y);
+                for(let pass=0; pass<3; pass++) {
+                    let temp = new Float32Array(w*h);
+                    for(let y=1; y<h-1; y++) { for(let x=1; x<w-1; x++) { let i = y*w+x;
+                        temp[i] = (blur[i-w-1] + 2*blur[i-w] + blur[i-w+1] + 2*blur[i-1] + 4*blur[i] + 2*blur[i+1] + blur[i+w-1] + 2*blur[i+w] + blur[i+w+1])/16.0;
+                    }} blur.set(temp);
+                }
+                let edgeFloats = new Float32Array(w*h); let maxE = 0, sumE = 0;
+                for(let y=1; y<h-1; y++) {
+                    for(let x=1; x<w-1; x++) { let i = y*w+x;
+                        let edx = -1*blur[i-w-1] + 1*blur[i-w+1] - 2*blur[i-1] + 2*blur[i+1] - 1*blur[i+w-1] + 1*blur[i+w+1];
+                        let edy = -1*blur[i-w-1] - 2*blur[i-w] - 1*blur[i-w+1] + 1*blur[i+w-1] + 2*blur[i+w] + 1*blur[i+w+1];
+                        let mag = Math.sqrt(edx*edx + edy*edy); edgeFloats[i] = mag; sumE += mag; if(mag>maxE) maxE=mag;
                     }
                 }
-                for (let y=1; y<h-1; y++) {
-                    for (let x=1; x<w-1; x++) {
-                        let dx = -1*bY[(y-1)*w+(x-1)] + 1*bY[(y-1)*w+(x+1)] - 2*bY[y*w+(x-1)] + 2*bY[y*w+(x+1)] - 1*bY[(y+1)*w+(x-1)] + 1*bY[(y+1)*w+(x+1)];
-                        let dy = -1*bY[(y-1)*w+(x-1)] - 2*bY[(y-1)*w+x] - 1*bY[(y-1)*w+(x+1)] + 1*bY[(y+1)*w+(x-1)] + 2*bY[(y+1)*w+x] + 1*bY[(y+1)*w+(x+1)];
-                        let mag = Math.sqrt(dx*dx + dy*dy);
-                        this.gridDict.edge[y*w + x] = mag > 20 ? Math.min(255, (mag - 20) * 5) : 0;
-                    }
-                }
+                let thresh = (sumE / (w*h)) * 1.5;
+                for(let i=0; i<w*h; i++) { this.gridDict.edge[i] = (edgeFloats[i] < thresh) ? 0 : Math.min(255, ((edgeFloats[i] - thresh)/(maxE - thresh)) * 255 * 2.5); }
 
                 this.gridW = w; this.gridH = h;
                 const gc = document.getElementById('grid-container'); gc.innerHTML = '';
@@ -994,35 +991,39 @@
 
             // --- AR LIVE ---
             openAR() {
-                this.activeModule = 'dp'; this.switch('state-ar'); this.setARMatrix('RAW'); CameraEngine.init(); this.arActive=true; setTimeout(() => { this.loopAR(); }, 500); 
+                this.activeModule = 'dp'; this.switch('state-ar'); this.setARMatrix('RAW'); CameraEngine.init(); this.arActive=true; this.arNeedsRecalc=true; setTimeout(() => { this.loopAR(); }, 500); 
             },
             closeAR() { this.arActive=false; CameraEngine.stop(); this.activeModule=null; this.switch('state-home'); },
             setARMatrix(m) {
                 document.querySelectorAll('.ar-matrix-btn').forEach(b=>b.classList.remove('active')); 
-                document.getElementById('ar-mat-'+m).classList.add('active'); 
+                let btn = document.getElementById('ar-mat-'+m); if(btn) btn.classList.add('active'); 
                 this.mat = m;
-                
-                if(m!=='RAW') {
-                    const video = CameraEngine.getVideoElement(); if(!video || video.videoWidth === 0) return;
-                    const c=document.createElement('canvas'); c.width=256; c.height=256; 
-                    
-                    let sW = video.videoWidth * 0.5, sH = video.videoHeight * 0.5;
-                    if(sW < 10) return; 
-                    c.getContext('2d').drawImage(video, video.videoWidth*0.25, video.videoHeight*0.25, sW, sH, 0, 0, 256, 256);
-                    
-                    let sp = (m==='LDS')?'LAB':(m==='RGB'||m==='CRGB')?'RGB':'YUV'; this.calcMath(c.getContext('2d').getImageData(0,0,256,256).data, 256, 256, sp); 
-                    const canvas = document.getElementById('gl-canvas'); if(!GLEngine.gl) GLEngine.init(canvas); this.applyDP(true);
-                } else { GLEngine.isActive = false; }
+                if(m !== 'RAW') { this.arNeedsRecalc = true; GLEngine.isActive = true; } else { GLEngine.isActive = false; }
             },
             loopAR() {
                 if(!this.arActive) return; const video = CameraEngine.getVideoElement();
-                if(video && video.readyState >= 2 && video.videoWidth > 0) {
-                    const c=document.getElementById('gl-canvas'); if(c.width!==video.videoWidth) {c.width=video.videoWidth; c.height=video.videoHeight;}
-                    if(this.mat!=='RAW' && GLEngine.gl && GLEngine.isActive && this.cache.valid) {
-                        if(!this.arVideoCanvas) { this.arVideoCanvas = document.createElement('canvas'); this.arCtx = this.arVideoCanvas.getContext('2d', {willReadFrequently: true}); }
-                        if(this.arVideoCanvas.width !== video.videoWidth) { this.arVideoCanvas.width = video.videoWidth; this.arVideoCanvas.height = video.videoHeight; }
-                        this.arCtx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight); GLEngine.render(this.arVideoCanvas);
-                    } else if(GLEngine.gl) { GLEngine.gl.viewport(0, 0, GLEngine.gl.canvas.width, GLEngine.gl.canvas.height); GLEngine.gl.clearColor(0,0,0,0); GLEngine.gl.clear(GLEngine.gl.COLOR_BUFFER_BIT); }
+                if(video && video.readyState >= 2 && video.videoWidth > 10) {
+                    const w = video.videoWidth, h = video.videoHeight;
+                    const c = document.getElementById('gl-canvas'); if(c.width !== w) { c.width = w; c.height = h; }
+                    
+                    if(this.mat !== 'RAW' && GLEngine.gl) {
+                        if(this.arNeedsRecalc) {
+                            const tempC = document.createElement('canvas'); tempC.width = 256; tempC.height = 256;
+                            tempC.getContext('2d').drawImage(video, w*0.25, h*0.25, w*0.5, h*0.5, 0, 0, 256, 256);
+                            let sp = (this.mat==='LDS')?'LAB':(this.mat==='RGB'||this.mat==='CRGB')?'RGB':'YUV';
+                            this.calcMath(tempC.getContext('2d').getImageData(0,0,256,256).data, 256, 256, sp); 
+                            if(!GLEngine.program) GLEngine.init(c); 
+                            this.applyDP(true); this.arNeedsRecalc = false;
+                        }
+                        if(this.cache.valid && !this.arNeedsRecalc) {
+                            if(!this.arVideoCanvas) { this.arVideoCanvas = document.createElement('canvas'); this.arCtx = this.arVideoCanvas.getContext('2d', {willReadFrequently: true}); }
+                            if(this.arVideoCanvas.width !== w) { this.arVideoCanvas.width = w; this.arVideoCanvas.height = h; }
+                            this.arCtx.drawImage(video, 0, 0, w, h); GLEngine.render(this.arVideoCanvas);
+                        }
+                    } else if(GLEngine.gl) { 
+                        GLEngine.gl.viewport(0, 0, GLEngine.gl.canvas.width, GLEngine.gl.canvas.height); 
+                        GLEngine.gl.clearColor(0,0,0,0); GLEngine.gl.clear(GLEngine.gl.COLOR_BUFFER_BIT); 
+                    }
                 }
                 requestAnimationFrame(()=>this.loopAR());
             },
