@@ -5,24 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Forensics Suite Pro</title>
     <style>
-        /* --- CORE CSS --- */
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         html, body { width: 100%; height: 100%; position: fixed; top: 0; left: 0; overflow: hidden !important; background-color: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, sans-serif; touch-action: none; }
 
         .app-state { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; background: #000; z-index: 1; }
         .active-state { display: flex; z-index: 10; }
 
-        /* HUB */
         #state-home { justify-content: center; align-items: center; background: #000; padding: 20px;}
         .app-title { font-size: 32px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 5px; text-align: center;}
         .app-subtitle { font-size: 15px; color: #888; margin-bottom: 30px; text-align: center;}
         .module-cards { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 350px; }
 
-        .module-card { 
-            position: relative; overflow: hidden; display: flex; align-items: center; background: #111; border-radius: 16px; 
-            padding: 15px; cursor: pointer; border: 1px solid #222; transition: transform 0.1s; 
-            width: 100%; text-align: left; color: #fff; font-family: inherit;
-        }
+        .module-card { position: relative; overflow: hidden; display: flex; align-items: center; background: #111; border-radius: 16px; padding: 15px; cursor: pointer; border: 1px solid #222; transition: transform 0.1s; width: 100%; text-align: left; color: #fff; font-family: inherit; }
         .module-card:active { transform: scale(0.97); background: #1a1a1a; }
         .mod-file-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
         .mod-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 22px; margin-right: 15px; z-index: 1;}
@@ -30,7 +24,6 @@
         .mod-text h3 { font-size: 16px; font-weight: 600; margin-bottom: 3px; color: #fff;}
         .mod-text p { font-size: 13px; color: #888; }
 
-        /* EDITORS */
         .editor-top-bar { display: flex; justify-content: space-between; align-items: center; padding: env(safe-area-inset-top, 20px) 20px 15px; background: #000; z-index: 20; border-bottom: 1px solid #111;}
         .text-btn { background: none; border: none; color: #fff; font-size: 17px; cursor: pointer; }
         .text-btn.bold { font-weight: 600; color: #FF2A5F; }
@@ -41,7 +34,6 @@
         .primary-btn { background: #FF2A5F; color: white; border: none; padding: 10px 20px; border-radius: 25px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .blue-btn { background: #3b82f6; }
 
-        /* CANVAS */
         .canvas-container { position: relative; flex: 1; width: 100%; overflow: hidden; background: #111; touch-action: none; }
         .checkerboard-bg { background-image: linear-gradient(45deg, #1f1f1f 25%, transparent 25%), linear-gradient(-45deg, #1f1f1f 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1f1f1f 75%), linear-gradient(-45deg, transparent 75%, #1f1f1f 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; touch-action: none; }
@@ -51,7 +43,6 @@
         @keyframes scanAnim { 0% { top: 0; opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
         .scanning { display: block !important; animation: scanAnim 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 
-        /* TOOLS */
         #color-loupe { position: absolute; width: 64px; height: 64px; border-radius: 50%; border: 4px solid white; background-color: transparent; box-shadow: 0 4px 15px rgba(0,0,0,0.8); z-index: 9999; display: none; pointer-events: none; transform: translate(-50%, -50%); }
         .loupe-crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 14px; height: 14px; border: 1.5px solid rgba(255,255,255,0.9); border-radius: 50%; box-shadow: 0 0 3px rgba(0,0,0,0.5); }
         .floating-compare { position: absolute; top: 15px; right: 15px; width: 44px; height: 44px; border-radius: 22px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: white; display: flex; justify-content: center; align-items: center; z-index: 10; cursor: pointer; backdrop-filter: blur(5px); }
@@ -73,7 +64,6 @@
         .matrix-btn { background: #222; color: #888; padding: 12px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; border: 1px solid #333; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
         .matrix-btn.active { background: #fff; color: #000; border-color: #fff; transform: scale(1.05); }
 
-        /* TOGGLES */
         .switch { position: relative; display: inline-block; width: 40px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider-switch { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .3s; border-radius: 24px; }
@@ -81,10 +71,8 @@
         input:checked + .slider-switch { background-color: #4ade80; }
         input:checked + .slider-switch:before { transform: translateX(16px); }
 
-        /* TOPOLIGHT HUD */
         #topo-light-indicator { position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 0 15px #fff; z-index: 10; pointer-events: none; transition: transform 0.1s; }
 
-        /* RETROGRID - 16 CHANNEL 4x4 MATRIX */
         #grid-container { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; gap: 2px; flex: 1; background: #000; padding: 2px; overflow-y: auto; }
         .grid-item { position: relative; background: #111; overflow: hidden; display: flex; justify-content: center; align-items: center; cursor: pointer; aspect-ratio: 1/1; }
         .grid-item canvas { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
@@ -95,7 +83,6 @@
         .grid-nav-btn { position:absolute; top:50%; transform:translateY(-50%); width: 44px; height: 60px; background: rgba(0,0,0,0.6); color: white; font-size: 24px; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 100; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); }
         .tune-deck { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px 20px; background: #000; border-top: 1px solid #222; }
 
-        /* AR VIEW */
         #camera-stream, #gl-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         #gl-canvas { z-index: 1; pointer-events: none; }
         .ar-top-bar { position: absolute; top: 0; left: 0; width: 100%; padding: env(safe-area-inset-top, 20px) 20px; display: flex; justify-content: space-between; z-index: 10; pointer-events: none; }
@@ -392,11 +379,10 @@
             },
             render(videoElement) {
                 if(!this.gl || !this.isActive) return;
+                this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
                 this.gl.bindTexture(this.gl.TEXTURE_2D, this.tex); 
                 this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, videoElement);
-                const m = this.currentMatrix; 
-                // BUG FIX: Correctly map 2D JS Matrix to 1D WebGL Array
-                const glMatrix = new Float32Array([m[0][0], m[1][0], m[2][0], m[0][1], m[1][1], m[2][1], m[0][2], m[1][2], m[2][2]]);
+                const m = this.currentMatrix; const glMatrix = new Float32Array([m[0][0], m[1][0], m[2][0], m[0][1], m[1][1], m[2][1], m[0][2], m[1][2], m[2][2]]);
                 this.gl.uniformMatrix3fv(this.gl.getUniformLocation(this.program, "u_matrix"), false, glMatrix); 
                 this.gl.uniform3fv(this.gl.getUniformLocation(this.program, "u_means"), this.currentChannelMeans); 
                 this.gl.uniform3fv(this.gl.getUniformLocation(this.program, "u_targetMeans"), this.currentTargetMeans); 
@@ -413,20 +399,16 @@
             cache: { valid: false, T: null, means: [0,0,0], space: 'RGB' },
             hist: [], wandCol: null, isCmp: false, hasNuked: false, icaDepth: 0.0,
             
-            // TOPOLIGHT
             topoNormals: null, topoL: {x: 0, y: 0, z: 1}, topoYRE: null, topoRaw: null, topoW: 0, topoH: 0, useYRE: false, topoExposure: 1.5, isLightDragging: false, topoXRay: false,
             
-            // RETROGRID (16 CHANNELS)
             rgPrepData: null, gridDict: {}, activeGridChannel: null, gridW: 0, gridH: 0,
             gridChs: [
-                {id: 'r', n: 'Red Channel (RGB)'}, {id: 'g', n: 'Green Channel (RGB)'}, {id: 'b', n: 'Blue Channel (RGB)'}, {id: 'y', n: 'Luminance (YCbCr)'}, 
-                {id: 'h', n: 'Hue Map (HSV)'}, {id: 's', n: 'Saturation (HSV)'}, {id: 'v', n: 'Value (HSV)'}, {id: 'edge', n: 'Structural X-Ray (Edge)'},
+                {id: 'edge', n: 'Structural X-Ray (Edge)'}, {id: 'r', n: 'Red Channel (RGB)'}, {id: 'g', n: 'Green Channel (RGB)'}, {id: 'b', n: 'Blue Channel (RGB)'}, 
+                {id: 'y', n: 'Luminance (YCbCr)'}, {id: 'h', n: 'Hue Map (HSV)'}, {id: 's', n: 'Saturation (HSV)'}, {id: 'v', n: 'Value (HSV)'}, 
                 {id: 'l', n: 'Lightness (LAB)'}, {id: 'a', n: 'A-Band (Green/Red)'}, {id: 'b2', n: 'B-Band (Blue/Yellow)'}, {id: 'cb', n: 'Cb-Band (Blue diff)'}, 
                 {id: 'cr', n: 'Cr-Band (Red diff)'}, {id: 'rg_ratio', n: 'Red/Green Index'}, {id: 'rb_ratio', n: 'Red/Blue Index'}, {id: 'gb_ratio', n: 'Green/Blue Index'}
             ],
             gridExposure: 1.0,
-            
-            // AR
             arActive: false, arVideoCanvas: null, arCtx: null,
 
             init() {
@@ -448,7 +430,6 @@
                 });
             },
 
-            // --- UNIVERSAL MOUSE/TOUCH ---
             bindPointer(id, renderFn, isTopo=false) {
                 const el = document.getElementById(id);
                 el.addEventListener('mousedown', (e) => {
@@ -553,13 +534,13 @@
                     const img = new Image();
                     img.onload = () => {
                         this.image = img; this.tx = { s: 1, px: 0, py: 0 }; 
-                        if(mod === 'dp') { this.resetDP(); this.switch('state-editor'); setTimeout(() => { this.resizeUICanvas(); this.renderDP(); }, 150); }
-                        if(mod === 'topo') { this.switch('state-topolight'); setTimeout(() => this.initTopo(), 150); }
+                        if(mod === 'dp') { this.resetDP(); this.switch('state-editor'); setTimeout(() => { this.resizeUICanvas(); this.renderDP(); }, 300); }
+                        if(mod === 'topo') { this.switch('state-topolight'); setTimeout(() => this.initTopo(), 300); } // 300ms for iPhone safety
                         if(mod === 'grid-prep') { 
                             this.rgPrepData = { exp: 100, cont: 100, bp: 0, sharp: 0 };
                             document.getElementById('rg-prep-exp').value = 100; document.getElementById('rg-prep-cont').value = 100;
                             document.getElementById('rg-prep-bp').value = 0; document.getElementById('rg-prep-sharp').value = 0;
-                            this.switch('state-retrogrid-prep'); setTimeout(() => this.renderRGPrep(), 150); 
+                            this.switch('state-retrogrid-prep'); setTimeout(() => this.renderRGPrep(), 300); 
                         }
                     }; img.src = ev.target.result;
                 }; r.readAsDataURL(file); e.target.value = '';
@@ -644,17 +625,17 @@
 
             applyDP(isAR=false) {
                 if(!this.cache.valid) return;
-                let { V, D, means, space } = this.cache; let std = 0.05 + (this.intensity * 0.2);
+                let { V, D, means, space } = this.cache; 
+                let std = (isAR) ? 0.02 + (this.intensity * 0.1) : 0.05 + (this.intensity * 0.2); // Tame AR blowout
                 let icaDamp = 1.0 - this.icaDepth;
                 let Dinv = [[(std/Math.sqrt(Math.max(D[0],0.0001)))*icaDamp,0,0], [0,std/Math.sqrt(Math.max(D[1],0.0001)),0], [0,0,std/Math.sqrt(Math.max(D[2],0.0001))]];
                 let T = this.mult(this.mult(V, Dinv), this.trans(V)); this.cache.T = T;
                 
-                // MATH FIX: Correct Target Means to prevent Pink washout
                 let tM = [0.5, (space==='RGB')?0.5:0.0, (space==='RGB')?0.5:0.0];
                 
                 if(isAR) {
                     if(GLEngine.gl) { 
-                        GLEngine.currentMatrix = [T[0][0], T[1][0], T[2][0], T[0][1], T[1][1], T[2][1], T[0][2], T[1][2], T[2][2]]; 
+                        GLEngine.currentMatrix = [T[0][0], T[3][0], T[6][0], T[1][0], T[4][0], T[7][0], T[2][0], T[5][0], T[8][0]]; 
                         GLEngine.currentChannelMeans = means; 
                         GLEngine.currentTargetMeans = tM; 
                         GLEngine.currentColorSpace = (space==='LAB')?2:(space==='YUV')?1:0; 
@@ -724,11 +705,11 @@
 
             // --- MODULE 2: TOPOLIGHT ---
             initTopo() {
-                let w = this.image.width, h = this.image.height; const max = 1024;
+                // iPhone Safari Limit Fix: Downscale Max to 800px
+                let w = this.image.width, h = this.image.height; const max = 800;
                 if(w>max || h>max){ let r=w/h; if(r>1){w=max; h=max/r;} else {h=max; w=max*r;} } w=Math.floor(w); h=Math.floor(h);
                 const tc=document.createElement('canvas'); tc.width=w; tc.height=h; const ctx=tc.getContext('2d', {willReadFrequently:true}); ctx.drawImage(this.image,0,0,w,h);
                 
-                // TOPOLIGHT BLANK SCREEN FIX: Ensure isolated clone array
                 const sourceData = ctx.getImageData(0,0,w,h).data; 
                 this.topoRaw = new Uint8ClampedArray(sourceData);
                 this.topoNormals = new Float32Array(w*h*3);
@@ -835,7 +816,7 @@
                 if(ch==='h') { let h=v/255*6, x=255*(1-Math.abs(h%2-1)); if(h<1)return[255,x,0]; if(h<2)return[x,255,0]; if(h<3)return[0,255,x]; if(h<4)return[0,x,255]; if(h<5)return[x,0,255]; return[255,0,x]; }
                 if(ch==='a') return [v, 255-v, 0]; 
                 if(ch==='b2') return [255-v, v, v]; 
-                if(ch==='edge') return [0, v, 0]; // Edges glow neon green
+                if(ch==='edge') return [0, v, 0]; // X-Ray Green
                 return [v,v,v]; 
             },
             initGrid() {
@@ -856,28 +837,35 @@
                     this.gridDict.y[j] = 0.299*R + 0.587*G + 0.114*B; this.gridDict.cb[j] = 128 - 0.1687*R - 0.3313*G + 0.5*B; this.gridDict.cr[j] = 128 + 0.5*R - 0.4187*G - 0.0813*B;
                 }
 
-                // 16TH CHANNEL: SOBEL EDGE DETECTION
+                // X-RAY: Smooth Sobel Edge
                 const gy = (x, y) => { if(x<0)x=0; if(x>=w)x=w-1; if(y<0)y=0; if(y>=h)y=h-1; return this.gridDict.y[y*w + x]; };
                 for (let y=0; y<h; y++) {
                     for (let x=0; x<w; x++) {
                         let dx = -1*gy(x-1,y-1)+1*gy(x+1,y-1)-2*gy(x-1,y)+2*gy(x+1,y)-1*gy(x-1,y+1)+1*gy(x+1,y+1);
                         let dy = -1*gy(x-1,y-1)-2*gy(x,y-1)-1*gy(x+1,y-1)+1*gy(x-1,y+1)+2*gy(x,y+1)+1*gy(x+1,y+1);
-                        this.gridDict.edge[y*w + x] = Math.min(255, Math.sqrt(dx*dx + dy*dy));
+                        dx = dx/4.0; dy = dy/4.0; // Tame the math to prevent rock grain blowout
+                        this.gridDict.edge[y*w + x] = Math.min(255, Math.sqrt(dx*dx + dy*dy) * 2);
                     }
                 }
 
                 this.gridW = w; this.gridH = h;
-                
                 const gc = document.getElementById('grid-container'); gc.innerHTML = '';
+                
                 this.gridChs.forEach(c=>{
                     let a=this.gridDict[c.id]; let min=255, max=0; for(let i=0;i<a.length;i++){ if(a[i]<min)min=a[i]; if(a[i]>max)max=a[i]; }
                     const out = new Uint8ClampedArray(w*h*4);
                     if(max>min){ let r=max-min; for(let i=0;i<a.length;i++){ let val = ((a[i]-min)/r)*255; let rgb = this.gridColorMap(val, c.id); out[i*4]=rgb[0]; out[i*4+1]=rgb[1]; out[i*4+2]=rgb[2]; out[i*4+3]=255; a[i]=val; } }
                     
                     let div = document.createElement('div'); div.className = 'grid-item'; div.onclick = () => this.openGridModal(c.id, c.n);
+                    
+                    // STANDOUT STYLE FOR X-RAY
+                    if (c.id === 'edge') { div.style.border = "2px solid #00ffff"; }
+                    
                     let cnv = document.createElement('canvas'); cnv.id = 'grid-'+c.id; cnv.width=w; cnv.height=h;
                     let ctx = cnv.getContext('2d'); const iD = ctx.createImageData(w,h); iD.data.set(out); ctx.putImageData(iD,0,0);
                     let spn = document.createElement('span'); spn.innerText = c.n;
+                    if (c.id === 'edge') { spn.style.color = '#00ffff'; spn.style.fontSize = '12px'; }
+                    
                     div.appendChild(cnv); div.appendChild(spn); gc.appendChild(div);
                 });
             },
@@ -954,8 +942,11 @@
                 if(m!=='RAW') {
                     const video = CameraEngine.getVideoElement(); if(!video || video.videoWidth === 0) return;
                     const c=document.createElement('canvas'); c.width=256; c.height=256; 
+                    
+                    // AR FIX: Grab center 50% of the screen so iOS auto-exposure doesn't blow out the math
                     let sW = video.videoWidth * 0.5, sH = video.videoHeight * 0.5;
-                    c.getContext('2d').drawImage(video, video.videoWidth/4, video.videoHeight/4, sW, sH, 0, 0, 256, 256);
+                    c.getContext('2d').drawImage(video, video.videoWidth*0.25, video.videoHeight*0.25, sW, sH, 0, 0, 256, 256);
+                    
                     let sp = (m==='LDS')?'LAB':(m==='RGB'||m==='CRGB')?'RGB':'YUV'; this.calcMath(c.getContext('2d').getImageData(0,0,256,256).data, 256, 256, sp); 
                     const canvas = document.getElementById('gl-canvas'); if(!GLEngine.gl) GLEngine.init(canvas); this.applyDP(true);
                 } else { GLEngine.isActive = false; }
@@ -968,7 +959,7 @@
                         if(!this.arVideoCanvas) { this.arVideoCanvas = document.createElement('canvas'); this.arCtx = this.arVideoCanvas.getContext('2d', {willReadFrequently: true}); }
                         if(this.arVideoCanvas.width !== video.videoWidth) { this.arVideoCanvas.width = video.videoWidth; this.arVideoCanvas.height = video.videoHeight; }
                         this.arCtx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight); GLEngine.render(this.arVideoCanvas);
-                    } else if(GLEngine.gl) { GLEngine.gl.clearColor(0,0,0,0); GLEngine.gl.clear(GLEngine.gl.COLOR_BUFFER_BIT); }
+                    } else if(GLEngine.gl) { GLEngine.gl.viewport(0, 0, GLEngine.gl.canvas.width, GLEngine.gl.canvas.height); GLEngine.gl.clearColor(0,0,0,0); GLEngine.gl.clear(GLEngine.gl.COLOR_BUFFER_BIT); }
                 }
                 requestAnimationFrame(()=>this.loopAR());
             },
@@ -977,8 +968,7 @@
                 const r=video.getBoundingClientRect(), vR=w/h, cR=r.width/r.height; let dw=w, dh=h, sx=0, sy=0;
                 if(vR>cR) { dw=h*cR; sx=(w-dw)/2; } else { dh=w/cR; sy=(h-dh)/2; }
                 const c=document.createElement('canvas'); c.width=dw; c.height=dh; c.getContext('2d').drawImage(video, sx, sy, dw, dh, 0, 0, dw, dh);
-                this.image=c; this.arActive=false; CameraEngine.stop(); this.resetDP(); this.switch('state-editor'); 
-                setTimeout(()=> { this.resizeUICanvas(); this.renderDP(); this.runTextureNuke(); }, 150);
+                this.image=c; this.arActive=false; CameraEngine.stop(); this.resetDP(); this.switch('state-editor'); setTimeout(()=> { this.resizeUICanvas(); this.renderDP(); }, 150);
             }
         };
 
