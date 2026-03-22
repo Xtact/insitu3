@@ -34,11 +34,13 @@
         .icon-btn svg { width: 22px; height: 22px; pointer-events: none; }
         .icon-btn.active { background: #FF2A5F; box-shadow: 0 0 10px rgba(255,42,95,0.4); }
         .icon-btn.disabled { opacity: 0.3; pointer-events: none; }
+        .primary-btn { background: #FF2A5F; color: white; border: none; padding: 10px 20px; border-radius: 25px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .blue-btn { background: #3b82f6; }
 
         /* CANVAS */
         .canvas-container { position: relative; flex: 1; width: 100%; overflow: hidden; background: #111; touch-action: none; }
         .checkerboard-bg { background-image: linear-gradient(45deg, #1f1f1f 25%, transparent 25%), linear-gradient(-45deg, #1f1f1f 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1f1f1f 75%), linear-gradient(-45deg, transparent 75%, #1f1f1f 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
-        #static-canvas, #ui-canvas, #topo-canvas, #grid-modal-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; touch-action: none; }
         #ui-canvas { z-index: 2; pointer-events: auto; } 
 
         #scanner-line { position: absolute; left: 0; width: 100%; height: 3px; background: #00ffff; box-shadow: 0 0 20px 5px #00ffff; z-index: 50; display: none; top: 0; }
@@ -59,8 +61,8 @@
         input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: #333; outline: none; margin-top: 8px;}
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 12px; background: #fff; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
 
-        .carousel-header { display: flex; justify-content: center; align-items: center; padding: 5px 0; }
-        .carousel-header span { font-size: 10px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .carousel-header { display: flex; justify-content: center; align-items: center; padding: 10px 0 5px; }
+        .carousel-header span { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
         #active-colorspace-label { color: #FF2A5F; font-size: 12px;}
         #matrix-carousel, #ar-matrix-carousel { display: flex; overflow-x: auto; padding: 5px 20px 15px; gap: 12px; scrollbar-width: none; }
         #matrix-carousel::-webkit-scrollbar, #ar-matrix-carousel::-webkit-scrollbar { display: none; }
@@ -88,7 +90,6 @@
         #grid-modal-touch-zone { position:relative; flex:1; width:100%; overflow:hidden; touch-action:none; }
         .grid-nav-btn { position:absolute; top:50%; transform:translateY(-50%); width: 44px; height: 60px; background: rgba(0,0,0,0.6); color: white; font-size: 24px; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 100; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); }
 
-        /* TUNE DECK (RG) */
         .tune-deck { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px 20px; background: #000; border-top: 1px solid #222; }
 
         /* AR VIEW */
@@ -123,7 +124,7 @@
                 </label>
 
                 <label class="module-card">
-                    <input type="file" accept="image/png, image/jpeg" style="display:none" onchange="App.handleUpload(event, 'grid')">
+                    <input type="file" accept="image/png, image/jpeg" style="display:none" onchange="App.handleUpload(event, 'grid-prep')">
                     <div class="mod-icon" style="background: #3b82f6;">🎛️</div>
                     <div class="mod-text"><h3>RetroGrid</h3><p>15-Channel Forensic Separation</p></div>
                 </label>
@@ -208,6 +209,9 @@
                 <button class="zoom-btn" onclick="App.zoomMod(1.3)">+</button>
                 <button class="zoom-btn" onclick="App.zoomMod(0.769)">-</button>
             </div>
+            <div style="position:absolute; bottom:20px; width:100%; text-align:center; pointer-events:none; font-size:12px; color:rgba(255,255,255,0.6);">
+                1 Finger: Move Light &nbsp;|&nbsp; 2 Fingers: Pan/Zoom
+            </div>
         </div>
         
         <div class="editor-bottom-bar" style="padding: 15px 20px;">
@@ -232,15 +236,47 @@
         </div>
     </div>
 
+    <div id="state-retrogrid-prep" class="app-state">
+        <div class="editor-top-bar">
+            <button class="icon-btn" onclick="App.closeToHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            <span style="font-size: 14px; font-weight: 600; color: #3b82f6;">Pre-Tune Image</span>
+            <button class="primary-btn blue-btn" onclick="App.commitRGPrep()">Process 15 Channels</button>
+        </div>
+        <div class="canvas-container checkerboard-bg" id="rg-prep-touch-zone">
+            <canvas id="rg-prep-canvas"></canvas>
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="App.zoomMod(1.3)">+</button>
+                <button class="zoom-btn" onclick="App.zoomMod(0.769)">-</button>
+            </div>
+        </div>
+        <div class="tune-deck">
+            <div class="slider-container" style="padding:0; border:none;">
+                <div class="carousel-header"><span>Exposure</span></div>
+                <input type="range" id="rg-prep-exp" min="0" max="200" value="100" oninput="App.renderRGPrep()">
+            </div>
+            <div class="slider-container" style="padding:0; border:none;">
+                <div class="carousel-header"><span>Contrast</span></div>
+                <input type="range" id="rg-prep-cont" min="0" max="200" value="100" oninput="App.renderRGPrep()">
+            </div>
+            <div class="slider-container" style="padding:0; border:none;">
+                <div class="carousel-header"><span>Black Point</span></div>
+                <input type="range" id="rg-prep-bp" min="0" max="150" value="0" oninput="App.renderRGPrep()">
+            </div>
+            <div class="slider-container" style="padding:0; border:none;">
+                <div class="carousel-header"><span>Sharpen</span></div>
+                <input type="range" id="rg-prep-sharp" min="0" max="100" value="0" oninput="App.renderRGPrep()">
+            </div>
+        </div>
+    </div>
+
     <div id="state-retrogrid" class="app-state">
         <div class="editor-top-bar">
             <button class="icon-btn" onclick="App.closeToHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-            <span style="font-size: 14px; font-weight: 600; color: #3b82f6;">RetroGrid Engine</span>
+            <span style="font-size: 14px; font-weight: 600; color: #3b82f6;">Select Channel</span>
             <div style="width: 44px;"></div>
         </div>
         
-        <div id="grid-container">
-            </div>
+        <div id="grid-container"></div>
     </div>
 
     <div id="grid-modal">
@@ -258,22 +294,27 @@
                 <button class="zoom-btn" onclick="App.zoomMod(0.769)">-</button>
             </div>
         </div>
-        <div class="tune-deck">
-            <div class="slider-container" style="padding:0; border:none;">
-                <div class="carousel-header"><span>Exposure</span></div>
-                <input type="range" id="rg-exp" min="0" max="200" value="100" oninput="App.updateGridSettings()">
+        <div class="editor-bottom-bar">
+            <div class="tune-deck">
+                <div class="slider-container" style="padding:0; border:none;">
+                    <div class="carousel-header"><span>Exposure</span></div>
+                    <input type="range" id="rg-exp" min="0" max="200" value="100" oninput="App.updateGridSettings()">
+                </div>
+                <div class="slider-container" style="padding:0; border:none;">
+                    <div class="carousel-header"><span>Contrast</span></div>
+                    <input type="range" id="rg-cont" min="0" max="200" value="100" oninput="App.updateGridSettings()">
+                </div>
+                <div class="slider-container" style="padding:0; border:none;">
+                    <div class="carousel-header"><span>Black Point</span></div>
+                    <input type="range" id="rg-bp" min="0" max="150" value="0" oninput="App.updateGridSettings()">
+                </div>
+                <div class="slider-container" style="padding:0; border:none;">
+                    <div class="carousel-header"><span>Sharpen</span></div>
+                    <input type="range" id="rg-sharp" min="0" max="100" value="0" oninput="App.updateGridSettings()">
+                </div>
             </div>
-            <div class="slider-container" style="padding:0; border:none;">
-                <div class="carousel-header"><span>Contrast</span></div>
-                <input type="range" id="rg-cont" min="0" max="200" value="100" oninput="App.updateGridSettings()">
-            </div>
-            <div class="slider-container" style="padding:0; border:none;">
-                <div class="carousel-header"><span>Black Point</span></div>
-                <input type="range" id="rg-bp" min="0" max="150" value="0" oninput="App.updateGridSettings()">
-            </div>
-            <div class="slider-container" style="padding:0; border:none;">
-                <div class="carousel-header"><span>Sharpen</span></div>
-                <input type="range" id="rg-sharp" min="0" max="100" value="0" oninput="App.updateGridSettings()">
+            <div style="padding: 10px 20px;">
+                <button class="primary-btn blue-btn" style="width: 100%;" onclick="App.reprocessGrid()">Reprocess as Base Image</button>
             </div>
         </div>
     </div>
@@ -291,11 +332,11 @@
                 <input type="range" min="0" max="100" value="50" oninput="App.updateIntensity(this.value, true)">
             </div>
             <div id="ar-matrix-carousel" style="display: flex; overflow-x: auto; gap: 10px; width: 100%; padding: 0 20px; scrollbar-width: none;">
-                <button class="matrix-btn raw-btn active" id="ar-mat-RAW" onclick="App.setARMatrix('RAW')">RAW</button>
-                <button class="matrix-btn" id="ar-mat-YRE" onclick="App.setARMatrix('YRE')">YRE</button>
-                <button class="matrix-btn" id="ar-mat-CRGB" onclick="App.setARMatrix('CRGB')">CRGB</button>
-                <button class="matrix-btn" id="ar-mat-YBK" onclick="App.setARMatrix('YBK')">YBK</button>
-                <button class="matrix-btn" id="ar-mat-LDS" onclick="App.setARMatrix('LDS')">LDS</button>
+                <button class="matrix-btn ar-matrix-btn raw-btn active" id="ar-mat-RAW" onclick="App.setARMatrix('RAW')">RAW</button>
+                <button class="matrix-btn ar-matrix-btn" id="ar-mat-YRE" onclick="App.setARMatrix('YRE')">YRE</button>
+                <button class="matrix-btn ar-matrix-btn" id="ar-mat-CRGB" onclick="App.setARMatrix('CRGB')">CRGB</button>
+                <button class="matrix-btn ar-matrix-btn" id="ar-mat-YBK" onclick="App.setARMatrix('YBK')">YBK</button>
+                <button class="matrix-btn ar-matrix-btn" id="ar-mat-LDS" onclick="App.setARMatrix('LDS')">LDS</button>
             </div>
             <button id="shutter-btn" onclick="App.captureAR()"></button>
             <p class="ar-hint">Tap shutter to freeze frame and edit.</p>
@@ -365,8 +406,11 @@
             cache: { valid: false, T: null, means: [0,0,0], space: 'RGB' },
             hist: [], wandCol: null, isCmp: false,
             
+            // TOPOLIGHT
             topoNormals: null, topoL: {x: 0, y: 0, z: 1}, topoYRE: null, topoRaw: null, topoW: 0, topoH: 0, useYRE: false, topoExposure: 1.5, isLightDragging: false, topoXRay: false,
             
+            // RETROGRID
+            rgPrepData: null,
             gridDict: {}, activeGridChannel: null, gridW: 0, gridH: 0,
             gridChs: [
                 {id: 'r', n: 'Red Channel (RGB)'}, {id: 'g', n: 'Green Channel (RGB)'}, {id: 'b', n: 'Blue Channel (RGB)'},
@@ -375,13 +419,16 @@
                 {id: 'y', n: 'Luminance (YCbCr)'}, {id: 'cb', n: 'Cb-Band (Blue diff)'}, {id: 'cr', n: 'Cr-Band (Red diff)'},
                 {id: 'rg_ratio', n: 'Red/Green Index'}, {id: 'rb_ratio', n: 'Red/Blue Index'}, {id: 'gb_ratio', n: 'Green/Blue Index'}
             ],
+            gridExposure: 1.0,
             
+            // AR
             arActive: false, arVideoCanvas: null, arCtx: null,
 
             init() {
                 this.bindPointer('dp-touch-zone', () => this.renderDP(), false);
                 this.bindPointer('topo-touch-zone', () => this.renderTopo(), true);
                 this.bindPointer('grid-modal-touch-zone', () => this.renderGridModal(), false);
+                this.bindPointer('rg-prep-touch-zone', () => this.renderRGPrep(), false);
 
                 const cmp = document.getElementById('btn-compare');
                 cmp.addEventListener('pointerdown', ()=> { this.isCmp = true; this.renderDP(); });
@@ -391,12 +438,15 @@
                 window.addEventListener('resize', () => { 
                     if(this.module === 'dp') { this.resizeUICanvas(); this.renderDP(); }
                     if(this.module === 'topo') { this.renderTopo(); }
+                    if(this.module === 'grid-prep') { this.renderRGPrep(); }
                     if(this.module === 'grid' && this.activeGridChannel) { this.renderGridModal(); }
                 });
             },
 
+            // --- UNIVERSAL MOUSE/TOUCH ---
             bindPointer(id, renderFn, isTopo=false) {
                 const el = document.getElementById(id);
+                
                 el.addEventListener('mousedown', (e) => {
                     if(!this.image) return; const r = el.getBoundingClientRect();
                     if(isTopo) { this.isLightDragging = true; this.updateLightPos(e.clientX, e.clientY, r); return; }
@@ -407,6 +457,7 @@
                     }
                     this.touchState.isDragging = true; this.touchState.startX = e.clientX - this.tx.px; this.touchState.startY = e.clientY - this.tx.py;
                 });
+
                 el.addEventListener('mousemove', (e) => {
                     if(!this.image) return; const r = el.getBoundingClientRect();
                     if(isTopo && this.isLightDragging) { this.updateLightPos(e.clientX, e.clientY, r); return; }
@@ -417,6 +468,7 @@
                     }
                     if(this.touchState.isDragging && !isTopo) { this.tx.px = e.clientX - this.touchState.startX; this.tx.py = e.clientY - this.touchState.startY; renderFn(); }
                 });
+
                 el.addEventListener('mouseup', (e) => {
                     if(!this.image) return; this.isLightDragging = false; this.touchState.isDragging = false; 
                     const r = el.getBoundingClientRect(); const pR = window.devicePixelRatio || 1; const px = (e.clientX - r.left)*pR, py = (e.clientY - r.top)*pR;
@@ -429,6 +481,7 @@
                         if(this.tool === 'wand') { document.getElementById('color-loupe').style.display='none'; if(this.mat==='RAW') this.setMatrix('YRE'); this.execWand(px, py); }
                     }
                 });
+
                 el.addEventListener('mouseleave', () => { this.isLightDragging = false; this.touchState.isDragging = false; });
 
                 el.addEventListener('touchstart', (e) => {
@@ -449,6 +502,7 @@
                         this.touchState.startY = (e.touches[0].clientY + e.touches[1].clientY)/2 - this.tx.py;
                     }
                 }, {passive:false});
+
                 el.addEventListener('touchmove', (e) => {
                     if(!this.image) return; e.preventDefault(); const r = el.getBoundingClientRect();
                     if(e.touches.length === 1) {
@@ -467,6 +521,7 @@
                         renderFn();
                     }
                 }, {passive:false});
+
                 el.addEventListener('touchend', (e) => {
                     if(!this.image) return; this.isLightDragging = false; this.touchState.isDragging = false; 
                     if(e.changedTouches.length === 0) return; const pR = window.devicePixelRatio || 1; const r = el.getBoundingClientRect(); 
@@ -499,22 +554,36 @@
                     const img = new Image();
                     img.onload = () => {
                         this.image = img; this.tx = { s: 1, px: 0, py: 0 }; 
-                        if(mod === 'dp') { this.resetDP(); this.switch('state-editor'); this.loopUntilReady(()=>this.renderDP()); }
-                        if(mod === 'topo') { this.switch('state-topolight'); this.loopUntilReady(()=>this.initTopo()); }
-                        if(mod === 'grid') { this.switch('state-retrogrid'); this.loopUntilReady(()=>this.initGrid()); }
+                        if(mod === 'dp') { this.resetDP(); this.switch('state-editor'); this.waitForDimensions(() => this.renderDP(), 'ui-canvas'); }
+                        if(mod === 'topo') { this.switch('state-topolight'); this.waitForDimensions(() => this.initTopo(), 'topo-canvas'); }
+                        
+                        // NEW RG PREP WORKFLOW
+                        if(mod === 'grid-prep') { 
+                            this.rgPrepData = { exp: 100, cont: 100, bp: 0, sharp: 0 };
+                            document.getElementById('rg-prep-exp').value = 100; document.getElementById('rg-prep-cont').value = 100;
+                            document.getElementById('rg-prep-bp').value = 0; document.getElementById('rg-prep-sharp').value = 0;
+                            this.switch('state-retrogrid-prep'); 
+                            this.waitForDimensions(() => this.renderRGPrep(), 'rg-prep-canvas'); 
+                        }
                     }; img.src = ev.target.result;
                 }; r.readAsDataURL(file); e.target.value = '';
             },
 
-            // FAIL-SAFE: Waits until container dimensions are valid before drawing
-            loopUntilReady(fn) {
-                let c = document.querySelector('.active-state .canvas-container');
-                if(!c) c = document.querySelector('.active-state #grid-container');
-                if(c && c.getBoundingClientRect().width === 0) { requestAnimationFrame(() => this.loopUntilReady(fn)); } 
-                else { setTimeout(() => { if(this.module==='dp')this.resizeUICanvas(); fn(); }, 50); }
+            // FAIL-SAFE: Guarantees container is open and sized before executing Heavy Math
+            waitForDimensions(fn, elementId) {
+                let el = document.getElementById(elementId);
+                let rect = el.parentElement.getBoundingClientRect();
+                if(rect.width === 0) { requestAnimationFrame(() => this.waitForDimensions(fn, elementId)); } 
+                else { setTimeout(() => { if(this.module==='dp') this.resizeUICanvas(); fn(); }, 50); }
             },
 
-            zoomMod(factor) { this.tx.s = Math.max(0.5, Math.min(this.tx.s * factor, 10)); if(this.module==='dp') this.renderDP(); else if(this.module==='topo') this.renderTopo(); else if(this.module==='grid') this.renderGridModal(); },
+            zoomMod(factor) { 
+                this.tx.s = Math.max(0.5, Math.min(this.tx.s * factor, 10)); 
+                if(this.module==='dp') this.renderDP(); 
+                else if(this.module==='topo') this.renderTopo(); 
+                else if(this.module==='grid-prep') this.renderRGPrep();
+                else if(this.module==='grid') this.renderGridModal(); 
+            },
 
             // --- DP ENGINE ---
             resetDP() {
@@ -664,26 +733,33 @@
                 let w = this.image.width, h = this.image.height; const max = 1024;
                 if(w>max || h>max){ let r=w/h; if(r>1){w=max; h=max/r;} else {h=max; w=max*r;} } w=Math.floor(w); h=Math.floor(h);
                 const tc=document.createElement('canvas'); tc.width=w; tc.height=h; const ctx=tc.getContext('2d', {willReadFrequently:true}); ctx.drawImage(this.image,0,0,w,h);
-                const d=ctx.getImageData(0,0,w,h).data; this.topoNormals = new Float32Array(w*h*3);
-                const gy=(x,y)=>{ if(x<0)x=0; if(x>=w)x=w-1; if(y<0)y=0; if(y>=h)y=h-1; let i=(y*w+x)*4; return (d[i]+d[i+1]+d[i+2])/3.0; };
+                
+                // TOPOLIGHT BLANK SCREEN FIX: Ensure isolated clone array
+                const sourceData = ctx.getImageData(0,0,w,h).data; 
+                this.topoRaw = new Uint8ClampedArray(sourceData);
+                this.topoNormals = new Float32Array(w*h*3);
+                
+                const gy=(x,y)=>{ if(x<0)x=0; if(x>=w)x=w-1; if(y<0)y=0; if(y>=h)y=h-1; let i=(y*w+x)*4; return (sourceData[i]+sourceData[i+1]+sourceData[i+2])/3.0; };
                 for(let y=0;y<h;y++){ for(let x=0;x<w;x++){
                     let dx = -1*gy(x-1,y-1)+1*gy(x+1,y-1)-2*gy(x-1,y)+2*gy(x+1,y)-1*gy(x-1,y+1)+1*gy(x+1,y+1);
                     let dy = -1*gy(x-1,y-1)-2*gy(x,y-1)-1*gy(x+1,y-1)+1*gy(x-1,y+1)+2*gy(x,y+1)+1*gy(x+1,y+1);
                     dx*=0.5; dy*=0.5; let dz=255.0; let len=Math.sqrt(dx*dx+dy*dy+dz*dz); let i=(y*w+x)*3; this.topoNormals[i]=dx/len; this.topoNormals[i+1]=dy/len; this.topoNormals[i+2]=dz/len;
                 }}
+                
                 this.buildDP(); if(this.cache.valid) {
                     let {V,D,means,space}=this.cache; let Dinv=[[0.15/Math.sqrt(Math.max(D[0],0.0001)),0,0],[0,0.15/Math.sqrt(Math.max(D[1],0.0001)),0],[0,0,0.15/Math.sqrt(Math.max(D[2],0.0001))]];
-                    let T=this.mult(this.mult(V,Dinv),this.trans(V)); this.topoYRE = new Uint8ClampedArray(d.length); this.topoYRE.set(d);
+                    let T=this.mult(this.mult(V,Dinv),this.trans(V)); 
+                    this.topoYRE = new Uint8ClampedArray(sourceData);
                     this.processPixels({data:this.topoYRE, width:w, height:h}, T, means, space);
                 }
                 
-                // FIXED TL DEFAULT
+                // Initialize default light (Center)
                 this.topoL = {x:0, y:0, z:1}; this.topoExposure = 1.5; 
                 let ind = document.getElementById('topo-light-indicator');
                 const tcRect = document.getElementById('topo-touch-zone').getBoundingClientRect();
                 ind.style.left = (tcRect.width/2) + 'px'; ind.style.top = (tcRect.height/2) + 'px';
                 
-                document.getElementById('topo-yre-toggle').checked = false; this.topoUseYRE = false; this.topoXRay = false; this.topoW = w; this.topoH = h; this.topoRaw = d; this.renderTopo();
+                document.getElementById('topo-yre-toggle').checked = false; this.topoUseYRE = false; this.topoXRay = false; this.topoW = w; this.topoH = h; this.renderTopo();
             },
             renderTopo() {
                 if(!this.topoNormals) return; const c=document.getElementById('topo-canvas'); const pR=window.devicePixelRatio||1;
@@ -708,7 +784,65 @@
             saveTopo() { const a=document.createElement('a'); a.download=`Topo_${Date.now()}.png`; a.href=document.getElementById('topo-canvas').toDataURL('image/png'); a.click(); },
 
             // --- MODULE 3: RETROGRID ---
-            // FORENSIC COLOR MAPPING
+            // RG STEP 1: PRE-TUNE
+            renderRGPrep() {
+                if(!this.image) return; const c = document.getElementById('rg-prep-canvas'); const ctx = c.getContext('2d');
+                const pR = window.devicePixelRatio || 1; let rect = c.parentElement.getBoundingClientRect(); if(rect.width===0) rect={width:window.innerWidth, height:window.innerHeight};
+                c.width = Math.floor(rect.width * pR); c.height = Math.floor(rect.height * pR);
+                
+                // Get Sliders
+                let exp = parseInt(document.getElementById('rg-prep-exp').value) / 100.0;
+                let cont = parseInt(document.getElementById('rg-prep-cont').value) / 100.0;
+                let bp = parseInt(document.getElementById('rg-prep-bp').value);
+                let sharp = parseInt(document.getElementById('rg-prep-sharp').value);
+
+                // Apply to downscaled proxy for fast rendering
+                let w = this.image.width, h = this.image.height; const max = 600; 
+                if(w>max || h>max){ let r=w/h; if(r>1){w=max;h=max/r;}else{h=max;w=max*r;} } w=Math.floor(w); h=Math.floor(h);
+                
+                const tc = document.createElement('canvas'); tc.width=w; tc.height=h; const tcx = tc.getContext('2d'); tcx.drawImage(this.image,0,0,w,h);
+                const iD = tcx.getImageData(0,0,w,h); const d = iD.data;
+
+                for(let i=0; i<d.length; i+=4) {
+                    for(let c=0; c<3; c++) {
+                        let v = d[i+c]; if(v < bp) v = 0; v *= exp; v = ((v/255 - 0.5) * cont + 0.5) * 255; d[i+c] = Math.max(0, Math.min(255, v));
+                    }
+                }
+                
+                if (sharp > 0) {
+                    let amount = sharp / 100.0;
+                    for(let y=1; y<h-1; y++) { for(let x=1; x<w-1; x++) { let i = (y*w + x)*4;
+                        for(let c=0; c<3; c++) {
+                            let blur = (d[i+c-4] + d[i+c+4] + d[i+c-w*4] + d[i+c+w*4] + d[i+c]) / 5.0;
+                            d[i+c] = Math.max(0, Math.min(255, d[i+c] + (d[i+c] - blur) * amount * 2));
+                        }
+                    }}
+                }
+
+                tcx.putImageData(iD,0,0);
+                ctx.clearRect(0,0,c.width,c.height); ctx.save(); ctx.translate(c.width/2 + this.tx.px, c.height/2 + this.tx.py); ctx.scale(this.tx.s, this.tx.s);
+                let ir=w/h, sr=c.width/c.height, dw, dh; if(ir>sr) { dw=c.width; dh=c.width/ir; } else { dh=c.height; dw=c.height*ir; }
+                ctx.translate(-dw/2, -dh/2); ctx.drawImage(tc, 0, 0, dw, dh); ctx.restore();
+            },
+            
+            // RG STEP 2: COMMIT PRE-TUNE TO FULL GRID
+            commitRGPrep() {
+                // Apply final full-res filter to image before starting Grid
+                const c = document.createElement('canvas'); c.width = this.image.width; c.height = this.image.height; const ctx = c.getContext('2d'); ctx.drawImage(this.image,0,0);
+                const iD = ctx.getImageData(0,0,c.width,c.height); const d = iD.data;
+                let exp = parseInt(document.getElementById('rg-prep-exp').value) / 100.0;
+                let cont = parseInt(document.getElementById('rg-prep-cont').value) / 100.0;
+                let bp = parseInt(document.getElementById('rg-prep-bp').value);
+                for(let i=0; i<d.length; i+=4) {
+                    for(let ch=0; ch<3; ch++) { let v = d[i+ch]; if(v < bp) v = 0; v *= exp; v = ((v/255 - 0.5) * cont + 0.5) * 255; d[i+ch] = Math.max(0, Math.min(255, v)); }
+                }
+                ctx.putImageData(iD,0,0);
+                const newImg = new Image(); newImg.onload = () => {
+                    this.image = newImg; this.module = 'grid'; this.switch('state-retrogrid'); setTimeout(() => { this.initGrid(); }, 50);
+                }; newImg.src = c.toDataURL();
+            },
+
+            // RG STEP 3: FORENSIC COLOR MAPPING
             gridColorMap(v, ch) {
                 if(ch==='r') return [v,0,0]; if(ch==='g') return [0,v,0]; if(ch==='b') return [0,0,v];
                 if(ch==='h') { let h=v/255*6, x=255*(1-Math.abs(h%2-1)); if(h<1)return[255,x,0]; if(h<2)return[x,255,0]; if(h<3)return[0,255,x]; if(h<4)return[0,x,255]; if(h<5)return[x,0,255]; return[255,0,x]; }
@@ -725,21 +859,17 @@
                     let R=d[i], G=d[i+1], B=d[i+2];
                     this.gridDict.r[j] = R; this.gridDict.g[j] = G; this.gridDict.b[j] = B;
                     
-                    // Ratios
                     this.gridDict.rg_ratio[j] = Math.min(255, (R / Math.max(G, 1)) * 100);
                     this.gridDict.rb_ratio[j] = Math.min(255, (R / Math.max(B, 1)) * 100);
                     this.gridDict.gb_ratio[j] = Math.min(255, (G / Math.max(B, 1)) * 100);
 
-                    // HSV
                     let rN=R/255, gN=G/255, bN=B/255, cx=Math.max(rN,gN,bN), cm=Math.min(rN,gN,bN), df=cx-cm, hv=0;
                     if(cx!==cm) { if(cx===rN) hv=(60*((gN-bN)/df)+360)%360; else if(cx===gN) hv=(60*((bN-rN)/df)+120)%360; else hv=(60*((rN-gN)/df)+240)%360; }
                     this.gridDict.h[j] = Math.floor((hv/360)*255); this.gridDict.s[j] = Math.floor((cx===0?0:df/cx)*255); this.gridDict.v[j] = Math.floor(cx*255);
                     
-                    // LAB
                     let L=0.21*R+0.71*G+0.07*B;
                     this.gridDict.l[j] = L; this.gridDict.a[j] = R-L+128; this.gridDict.b2[j] = B-L+128;
                     
-                    // YCbCr
                     this.gridDict.y[j] = 0.299*R + 0.587*G + 0.114*B;
                     this.gridDict.cb[j] = 128 - 0.1687*R - 0.3313*G + 0.5*B;
                     this.gridDict.cr[j] = 128 + 0.5*R - 0.4187*G - 0.0813*B;
@@ -774,7 +904,6 @@
             },
             closeGridModal() { document.getElementById('grid-modal').style.display = 'none'; this.activeGridChannel = null; },
             
-            // PRO TUNING DECK
             updateGridSettings() { this.renderGridModal(); },
             
             renderGridModal() {
@@ -789,26 +918,17 @@
                 let bp = parseInt(document.getElementById('rg-bp').value);
                 let sharp = parseInt(document.getElementById('rg-sharp').value);
 
-                // Apply Adjustments
                 let adjusted = new Uint8ClampedArray(baseData.length);
                 for(let i=0; i<baseData.length; i++) {
-                    let v = baseData[i];
-                    if (v < bp) v = 0; // Black point
-                    v = v * exp; // Exposure
-                    v = ((v/255 - 0.5) * cont + 0.5) * 255; // Contrast
-                    adjusted[i] = Math.max(0, Math.min(255, v));
+                    let v = baseData[i]; if (v < bp) v = 0; v = v * exp; v = ((v/255 - 0.5) * cont + 0.5) * 255; adjusted[i] = Math.max(0, Math.min(255, v));
                 }
 
-                // Apply Sharpen (Unsharp Mask Proxy) if slider > 0
                 if (sharp > 0) {
                     let w = this.gridW; let amount = sharp / 100.0;
-                    for(let y=1; y<this.gridH-1; y++) {
-                        for(let x=1; x<w-1; x++) {
-                            let i = y*w + x;
-                            let blur = (adjusted[i-1] + adjusted[i+1] + adjusted[i-w] + adjusted[i+w] + adjusted[i]) / 5.0;
-                            adjusted[i] = Math.max(0, Math.min(255, adjusted[i] + (adjusted[i] - blur) * amount * 2));
-                        }
-                    }
+                    for(let y=1; y<this.gridH-1; y++) { for(let x=1; x<w-1; x++) { let i = y*w + x;
+                        let blur = (adjusted[i-1] + adjusted[i+1] + adjusted[i-w] + adjusted[i+w] + adjusted[i]) / 5.0;
+                        adjusted[i] = Math.max(0, Math.min(255, adjusted[i] + (adjusted[i] - blur) * amount * 2));
+                    }}
                 }
 
                 for(let i=0; i<adjusted.length; i++) { 
@@ -820,6 +940,17 @@
                 let ir=this.gridW/this.gridH, sr=c.width/c.height, dw, dh; if(ir>sr) { dw=c.width; dh=c.width/ir; } else { dh=c.height; dw=c.height*ir; }
                 dCtx.translate(-dw/2, -dh/2); dCtx.drawImage(tc, 0, 0, dw, dh); dCtx.restore();
             },
+            
+            // RG STEP 4: REPROCESS NEW IMAGE
+            reprocessGrid() {
+                const c = document.getElementById('grid-modal-canvas');
+                const newImg = new Image();
+                newImg.onload = () => {
+                    this.image = newImg; this.closeGridModal(); this.initGrid();
+                };
+                newImg.src = c.toDataURL();
+            },
+            
             saveGrid() { const a=document.createElement('a'); a.download=`RetroGrid_${this.activeGridChannel}_${Date.now()}.png`; a.href=document.getElementById('grid-modal-canvas').toDataURL('image/png'); a.click(); },
 
             // --- AR LIVE ---
@@ -828,20 +959,15 @@
             },
             closeAR() { this.arActive=false; CameraEngine.stop(); this.activeModule=null; this.switch('state-home'); },
             setARMatrix(m) {
-                document.querySelectorAll('.ar-matrix-btn').forEach(b=>b.classList.remove('active')); document.getElementById('ar-mat-'+m).classList.add('active'); this.mat = m;
+                // FIXED: Clear AR Matrix Buttons Explicitly
+                document.querySelectorAll('.ar-matrix-btn').forEach(b=>b.classList.remove('active')); 
+                document.getElementById('ar-mat-'+m).classList.add('active'); 
+                this.mat = m;
+                
                 if(m!=='RAW') {
                     const video = CameraEngine.getVideoElement(); if(!video || video.videoWidth === 0) return;
-                    
-                    // AR AUTO-WHITE BALANCE: Grab center of frame to avoid vignetting issues causing washout
-                    const c=document.createElement('canvas'); c.width=256; c.height=256; 
-                    let sW = video.videoWidth * 0.5, sH = video.videoHeight * 0.5;
-                    c.getContext('2d').drawImage(video, video.videoWidth/4, video.videoHeight/4, sW, sH, 0, 0, 256, 256);
-                    
+                    const c=document.createElement('canvas'); c.width=256; c.height=256; c.getContext('2d').drawImage(video,0,0,256,256);
                     let sp = (m==='LDS')?'LAB':(m==='RGB'||m==='CRGB')?'RGB':'YUV'; this.calcMath(c.getContext('2d').getImageData(0,0,256,256).data, 256, 256, sp); 
-                    
-                    // AR BOOST: Multiply variance for live view punchiness
-                    this.cache.D[0] *= 0.5; this.cache.D[1] *= 0.5; this.cache.D[2] *= 0.5;
-
                     const canvas = document.getElementById('gl-canvas'); if(!GLEngine.gl) GLEngine.init(canvas); this.applyDP(true);
                 } else { GLEngine.isActive = false; }
             },
@@ -850,7 +976,9 @@
                 if(video && video.readyState >= 2 && video.videoWidth > 0) {
                     const c=document.getElementById('gl-canvas'); if(c.width!==video.videoWidth) {c.width=video.videoWidth; c.height=video.videoHeight;}
                     if(this.mat!=='RAW' && GLEngine.gl && GLEngine.isActive && this.cache.valid) {
-                        GLEngine.render(video);
+                        if(!this.arVideoCanvas) { this.arVideoCanvas = document.createElement('canvas'); this.arCtx = this.arVideoCanvas.getContext('2d', {willReadFrequently: true}); }
+                        if(this.arVideoCanvas.width !== video.videoWidth) { this.arVideoCanvas.width = video.videoWidth; this.arVideoCanvas.height = video.videoHeight; }
+                        this.arCtx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight); GLEngine.render(this.arVideoCanvas);
                     } else if(GLEngine.gl) { GLEngine.gl.clearColor(0,0,0,0); GLEngine.gl.clear(GLEngine.gl.COLOR_BUFFER_BIT); }
                 }
                 requestAnimationFrame(()=>this.loopAR());
