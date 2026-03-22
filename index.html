@@ -39,15 +39,11 @@
         .icon-btn.active { background: #FF2A5F; box-shadow: 0 0 10px rgba(255,42,95,0.4); }
         .icon-btn.disabled { opacity: 0.3; pointer-events: none; }
 
-        /* CANVAS & SCANNER */
+        /* CANVAS */
         .canvas-container { position: relative; flex: 1; width: 100%; overflow: hidden; background: #111; touch-action: none; }
         .checkerboard-bg { background-image: linear-gradient(45deg, #1f1f1f 25%, transparent 25%), linear-gradient(-45deg, #1f1f1f 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1f1f1f 75%), linear-gradient(-45deg, transparent 75%, #1f1f1f 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
         #static-canvas, #ui-canvas, #topo-canvas, #grid-modal-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; touch-action: none; }
         #ui-canvas { z-index: 2; pointer-events: auto; } 
-
-        #scanner-line { position: absolute; left: 0; width: 100%; height: 3px; background: #00ffff; box-shadow: 0 0 20px 5px #00ffff; z-index: 50; display: none; top: 0; }
-        @keyframes scanAnim { 0% { top: 0; opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
-        .scanning { display: block !important; animation: scanAnim 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 
         /* TOOLS */
         #color-loupe { position: absolute; width: 64px; height: 64px; border-radius: 50%; border: 4px solid white; background-color: transparent; box-shadow: 0 4px 15px rgba(0,0,0,0.8); z-index: 9999; display: none; pointer-events: none; transform: translate(-50%, -50%); }
@@ -80,7 +76,7 @@
         input:checked + .slider-switch:before { transform: translateX(16px); }
 
         /* TOPOLIGHT HUD */
-        #topo-light-indicator { position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 0 15px #fff; z-index: 10; pointer-events: none; transition: transform 0.1s; }
+        #topo-light-indicator { position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 0 15px #fff; top: 0; left: 0; transform: translate(-50%, -50%); z-index: 10; pointer-events: none; }
 
         /* RETROGRID */
         #grid-container { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; flex: 1; background: #000; padding: 2px; }
@@ -90,6 +86,7 @@
         
         #grid-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:99999; background:#000; flex-direction:column; }
         #grid-modal-touch-zone { position:relative; flex:1; width:100%; overflow:hidden; touch-action:none; }
+        .grid-nav-btn { position:absolute; top:50%; transform:translateY(-50%); width: 50px; height: 80px; background: rgba(0,0,0,0.5); color: white; font-size: 30px; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 100; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); }
 
         /* AR VIEW */
         #camera-stream, #gl-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -125,7 +122,7 @@
                 <label class="module-card">
                     <input type="file" accept="image/png, image/jpeg" style="display:none" onchange="App.handleUpload(event, 'grid')">
                     <div class="mod-icon" style="background: #3b82f6;">🎛️</div>
-                    <div class="mod-text"><h3>RetroGrid</h3><p>9-Channel auto-contrast</p></div>
+                    <div class="mod-text"><h3>RetroGrid</h3><p>9-Channel Pseudo-Color Maps</p></div>
                 </label>
 
                 <div class="module-card" onclick="App.openAR()" style="border: 1px solid #333; background: transparent;">
@@ -149,7 +146,6 @@
         <div class="canvas-container checkerboard-bg" id="dp-touch-zone">
             <canvas id="static-canvas"></canvas>
             <canvas id="ui-canvas"></canvas>
-            <div id="scanner-line"></div>
             <div id="color-loupe"><div class="loupe-crosshair"></div></div>
             <button id="btn-compare" class="floating-compare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
             <div class="zoom-controls">
@@ -171,15 +167,9 @@
                 </div>
             </div>
             
-            <div style="display:flex; width:100%; border-bottom: 1px solid #111;">
-                <div class="slider-container" style="flex:1; border:none;">
-                    <div class="carousel-header"><span>Stretch Intensity</span></div>
-                    <input type="range" id="intensity-slider" min="0" max="100" value="50" oninput="App.updateIntensity(this.value)">
-                </div>
-                <div class="slider-container" style="flex:1; border:none; border-left: 1px solid #222;">
-                    <div class="carousel-header"><span style="color:#3b82f6;">Graffiti Depth (ICA)</span></div>
-                    <input type="range" id="ica-slider" min="0" max="95" value="0" oninput="App.updateICA(this.value)">
-                </div>
+            <div class="slider-container">
+                <div class="carousel-header"><span>Stretch Intensity</span></div>
+                <input type="range" id="intensity-slider" min="0" max="100" value="50" oninput="App.updateIntensity(this.value)">
             </div>
 
             <div class="carousel-header"><span id="active-colorspace-label">RAW (Native Image)</span></div>
@@ -208,25 +198,17 @@
                 <button class="zoom-btn" onclick="App.zoomMod(1.3)">+</button>
                 <button class="zoom-btn" onclick="App.zoomMod(0.769)">-</button>
             </div>
+            <div style="position:absolute; bottom:20px; width:100%; text-align:center; pointer-events:none; font-size:12px; color:rgba(255,255,255,0.6);">
+                1 Finger: Move Light &nbsp;|&nbsp; 2 Fingers: Pan/Zoom
+            </div>
         </div>
         
         <div class="editor-bottom-bar" style="padding: 15px 20px;">
-            <div class="slider-container" style="padding: 0 0 15px 0; border: none;">
-                <div class="carousel-header" style="margin-bottom: 5px;"><span style="font-size: 10px;">Exposure Boost</span></div>
-                <input type="range" min="5" max="40" value="15" oninput="App.updateTopoEx(this.value)">
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 14px; font-weight: 600;">Overlay YRE Pigment</span>
                 <label class="switch">
                     <input type="checkbox" onchange="App.toggleTopoYRE(this.checked)">
                     <span class="slider-switch round"></span>
-                </label>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 14px; font-weight: 600; color: #00ffff;">Incision X-Ray (Phase Edge)</span>
-                <label class="switch">
-                    <input type="checkbox" onchange="App.toggleTopoXRay(this.checked)">
-                    <span class="slider-switch round" style="background-color: #333;"></span>
                 </label>
             </div>
         </div>
@@ -239,15 +221,15 @@
             <div style="width: 44px;"></div>
         </div>
         <div id="grid-container">
-            <div class="grid-item" onclick="App.openGridModal('r', 'Red')"><canvas id="grid-r"></canvas><span>Red</span></div>
-            <div class="grid-item" onclick="App.openGridModal('g', 'Green')"><canvas id="grid-g"></canvas><span>Green</span></div>
-            <div class="grid-item" onclick="App.openGridModal('b', 'Blue')"><canvas id="grid-b"></canvas><span>Blue</span></div>
-            <div class="grid-item" onclick="App.openGridModal('h', 'Hue')"><canvas id="grid-h"></canvas><span>Hue</span></div>
+            <div class="grid-item" onclick="App.openGridModal('r', 'Red Channel')"><canvas id="grid-r"></canvas><span>Red</span></div>
+            <div class="grid-item" onclick="App.openGridModal('g', 'Green Channel')"><canvas id="grid-g"></canvas><span>Green</span></div>
+            <div class="grid-item" onclick="App.openGridModal('b', 'Blue Channel')"><canvas id="grid-b"></canvas><span>Blue</span></div>
+            <div class="grid-item" onclick="App.openGridModal('h', 'Hue Map')"><canvas id="grid-h"></canvas><span>Hue</span></div>
             <div class="grid-item" onclick="App.openGridModal('s', 'Saturation')"><canvas id="grid-s"></canvas><span>Saturation</span></div>
             <div class="grid-item" onclick="App.openGridModal('v', 'Value')"><canvas id="grid-v"></canvas><span>Value</span></div>
             <div class="grid-item" onclick="App.openGridModal('l', 'Lightness')"><canvas id="grid-l"></canvas><span>Lightness</span></div>
-            <div class="grid-item" onclick="App.openGridModal('a', 'A-Channel')"><canvas id="grid-a"></canvas><span>A-Channel</span></div>
-            <div class="grid-item" onclick="App.openGridModal('b2', 'B-Channel')"><canvas id="grid-b2"></canvas><span>B-Channel</span></div>
+            <div class="grid-item" onclick="App.openGridModal('a', 'A-Channel (Green/Red)')"><canvas id="grid-a"></canvas><span>A-Channel</span></div>
+            <div class="grid-item" onclick="App.openGridModal('b2', 'B-Channel (Blue/Yellow)')"><canvas id="grid-b2"></canvas><span>B-Channel</span></div>
         </div>
     </div>
 
@@ -259,7 +241,11 @@
         </div>
         <div id="grid-modal-touch-zone" class="canvas-container checkerboard-bg">
             <canvas id="grid-modal-canvas"></canvas>
-            <div class="zoom-controls">
+            
+            <div class="grid-nav-btn" style="left: 10px;" onclick="App.cycleGrid(-1)">&#10094;</div>
+            <div class="grid-nav-btn" style="right: 10px;" onclick="App.cycleGrid(1)">&#10095;</div>
+
+            <div class="zoom-controls" style="bottom: 80px; top: auto; transform: none;">
                 <button class="zoom-btn" onclick="App.zoomMod(1.3)">+</button>
                 <button class="zoom-btn" onclick="App.zoomMod(0.769)">-</button>
             </div>
@@ -283,14 +269,14 @@
                 <input type="range" min="0" max="100" value="50" oninput="App.updateIntensity(this.value, true)">
             </div>
             <div id="ar-matrix-carousel" style="display: flex; overflow-x: auto; gap: 10px; width: 100%; padding: 0 20px; scrollbar-width: none;">
-                <button class="matrix-btn raw-btn active" id="ar-mat-RAW" onclick="App.setARMatrix('RAW')">RAW</button>
-                <button class="matrix-btn" id="ar-mat-YRE" onclick="App.setARMatrix('YRE')">YRE</button>
-                <button class="matrix-btn" id="ar-mat-CRGB" onclick="App.setARMatrix('CRGB')">CRGB</button>
-                <button class="matrix-btn" id="ar-mat-YBK" onclick="App.setARMatrix('YBK')">YBK</button>
-                <button class="matrix-btn" id="ar-mat-LDS" onclick="App.setARMatrix('LDS')">LDS</button>
+                <button class="matrix-btn ar-matrix-btn raw-btn active" id="ar-mat-RAW" onclick="App.setARMatrix('RAW')">RAW</button>
+                <button class="matrix-btn ar-matrix-btn" id="ar-mat-YRE" onclick="App.setARMatrix('YRE')">YRE</button>
+                <button class="matrix-btn ar-matrix-btn" id="ar-mat-CRGB" onclick="App.setARMatrix('CRGB')">CRGB</button>
+                <button class="matrix-btn ar-matrix-btn" id="ar-mat-YBK" onclick="App.setARMatrix('YBK')">YBK</button>
+                <button class="matrix-btn ar-matrix-btn" id="ar-mat-LDS" onclick="App.setARMatrix('LDS')">LDS</button>
             </div>
             <button id="shutter-btn" onclick="App.captureAR()"></button>
-            <p class="ar-hint">Tap shutter to freeze frame and auto-nuke grain.</p>
+            <p class="ar-hint">Tap shutter to freeze frame and edit.</p>
         </div>
     </div>
 
@@ -357,17 +343,16 @@
             cache: { valid: false, T: null, means: [0,0,0], space: 'RGB' },
             hist: [], wandCol: null, isCmp: false,
             
-            // TEXTURE NUKE (FFT)
-            hasNuked: false, 
+            // TOPOLIGHT
+            topoNormals: null, topoL: {x: 0, y: 0, z: 1}, topoYRE: null, topoRaw: null, topoW: 0, topoH: 0, useYRE: false, isLightDragging: false,
             
-            // STRATIGRAPHY ENGINE (ICA)
-            icaDepth: 0.0,
-
-            // TOPOLIGHT & X-RAY
-            topoNormals: null, topoL: {x: -0.5, y: -0.5, z: 0.707}, topoYRE: null, topoRaw: null, topoW: 0, topoH: 0, useYRE: false, topoExposure: 1.5, isLightDragging: false, topoXRay: false,
-            
+            // RETROGRID
             gridDict: {}, activeGridChannel: null, gridExposure: 1.0,
-            arActive: false, arVideoCanvas: null, arCtx: null,
+            gridChs: ['r','g','b','h','s','v','l','a','b2'],
+            gridNames: ['Red Channel','Green Channel','Blue Channel','Hue Map','Saturation','Value','Lightness','A-Channel (Green/Red)','B-Channel (Blue/Yellow)'],
+
+            // AR
+            arActive: false,
 
             init() {
                 this.bindPointer('dp-touch-zone', () => this.renderDP(), false);
@@ -386,12 +371,14 @@
                 });
             },
 
+            // --- UNIVERSAL MOUSE/TOUCH ---
             bindPointer(id, renderFn, isTopo=false) {
                 const el = document.getElementById(id);
                 
                 el.addEventListener('mousedown', (e) => {
                     if(!this.image) return; const r = el.getBoundingClientRect();
                     if(isTopo) { this.isLightDragging = true; this.updateLightPos(e.clientX, e.clientY, r); return; }
+                    
                     if(id === 'dp-touch-zone') {
                         const pR = window.devicePixelRatio || 1; const px = (e.clientX - r.left)*pR, py = (e.clientY - r.top)*pR;
                         if(this.tool === 'wand') { document.getElementById('color-loupe').style.display='block'; document.getElementById('color-loupe').style.left=px/pR+'px'; document.getElementById('color-loupe').style.top=(py/pR-80)+'px'; return; }
@@ -403,6 +390,7 @@
                 el.addEventListener('mousemove', (e) => {
                     if(!this.image) return; const r = el.getBoundingClientRect();
                     if(isTopo && this.isLightDragging) { this.updateLightPos(e.clientX, e.clientY, r); return; }
+                    
                     if(id === 'dp-touch-zone') {
                         const pR = window.devicePixelRatio || 1; const px = (e.clientX - r.left)*pR, py = (e.clientY - r.top)*pR;
                         if(this.tool === 'wand' && e.buttons > 0) { document.getElementById('color-loupe').style.left=px/pR+'px'; document.getElementById('color-loupe').style.top=(py/pR-80)+'px'; return; }
@@ -414,6 +402,7 @@
                 el.addEventListener('mouseup', (e) => {
                     if(!this.image) return; this.isLightDragging = false; this.touchState.isDragging = false; 
                     const r = el.getBoundingClientRect(); const pR = window.devicePixelRatio || 1; const px = (e.clientX - r.left)*pR, py = (e.clientY - r.top)*pR;
+
                     if(id === 'dp-touch-zone') {
                         if(this.tool === 'area' && this.box.a) {
                             this.box.a = false; const n = this.mapPx(px, py); this.box.iw = n.x - this.box.ix; this.box.ih = n.y - this.box.iy;
@@ -482,7 +471,8 @@
 
             updateLightPos(cx, cy, r) {
                 let lx = ((cx - r.left) / r.width) * 2 - 1; let ly = ((cy - r.top) / r.height) * 2 - 1;
-                document.getElementById('topo-light-indicator').style.transform = `translate(${lx*50}px, ${ly*50}px)`;
+                document.getElementById('topo-light-indicator').style.left = (cx - r.left) + 'px';
+                document.getElementById('topo-light-indicator').style.top = (cy - r.top) + 'px';
                 let len = Math.sqrt(lx*lx + ly*ly + 0.25); if(len > 0) { this.topoL = { x: lx/len, y: ly/len, z: 0.5/len }; this.renderTopo(); }
             },
 
@@ -507,10 +497,10 @@
 
             // --- DP ENGINE ---
             resetDP() {
-                this.mat = 'RAW'; this.intensity = 0.5; this.tol = 40; this.tool = 'global'; this.hasNuked = false; this.icaDepth = 0.0;
+                this.mat = 'RAW'; this.intensity = 0.5; this.tol = 40; this.tool = 'global';
                 this.tx = { s: 1, px: 0, py: 0 }; this.box = { a: false, d: false, ix: 0, iy: 0, iw: 0, ih: 0, sx: 0, sy: 0 };
                 this.cache = { valid: false, T: null, means: [0,0,0], space: 'RGB' }; this.hist = []; this.wandCol = null;
-                document.getElementById('intensity-slider').value = 50; document.getElementById('tolerance-slider').value = 40; document.getElementById('ica-slider').value = 0;
+                document.getElementById('intensity-slider').value = 50; document.getElementById('tolerance-slider').value = 40;
                 this.setTool('global'); this.setMatrix('RAW'); this.updateUndo();
             },
             setTool(t) {
@@ -519,41 +509,13 @@
                 if(t !== 'area') { this.box.d = false; } this.resizeUICanvas(); this.renderDP();
                 if(this.mat !== 'RAW' && t !== 'wand' && t !== 'area') { this.buildDP(); this.applyDP(); }
             },
-            
-            // FFT TEXTURE NUKE PROXY: Hardware Accelerated Low-Pass Filtering
-            runTextureNuke() {
-                const scanner = document.getElementById('scanner-line');
-                scanner.classList.add('scanning');
-                
-                // Fast spatial blur to eliminate rock grain before processing
-                const c = document.createElement('canvas'); c.width = this.image.width; c.height = this.image.height; const ctx = c.getContext('2d');
-                ctx.filter = 'blur(1.5px)'; ctx.drawImage(this.image, 0, 0); ctx.filter = 'none';
-                
-                const newImg = new Image();
-                newImg.onload = () => {
-                    this.image = newImg;
-                    setTimeout(() => { 
-                        scanner.classList.remove('scanning'); 
-                        this.hasNuked = true;
-                        this.buildDP(); this.applyDP(); 
-                    }, 1200); // Sync with scanner CSS animation
-                };
-                newImg.src = c.toDataURL();
-            },
-
             setMatrix(m) {
                 this.mat = m; ['RAW','YRE','CRGB','YBK','LDS'].forEach(id => document.getElementById('mat-'+id).classList.remove('active'));
                 document.getElementById('mat-'+m).classList.add('active'); document.getElementById('active-colorspace-label').innerText = m;
-                if(m === 'RAW') { this.cache.T = null; this.renderDP(); } 
-                else {
-                    if(!this.hasNuked) { this.runTextureNuke(); return; } // AUTO-PREP INTERCEPT
-                    if (this.tool !== 'wand' || this.cache.valid) { this.buildDP(); this.applyDP(); }
-                }
+                if(m === 'RAW') { this.cache.T = null; this.renderDP(); } else if (this.tool !== 'wand' || this.cache.valid) { this.buildDP(); this.applyDP(); }
             },
             updateTolerance(v) { this.tol = parseInt(v); if(this.tool==='wand' && this.cache.valid) this.applyDP(); },
             updateIntensity(v, isAR=false) { this.intensity = parseInt(v)/100; if(this.mat!=='RAW') this.applyDP(isAR); },
-            updateICA(v) { this.icaDepth = parseInt(v)/100; if(this.mat!=='RAW') this.applyDP(false); }, // 0 to 0.95
-            
             saveDP() {
                 const eC = document.createElement('canvas'); const ctx = eC.getContext('2d'); eC.width = this.image.width; eC.height = this.image.height; ctx.drawImage(this.image, 0,0);
                 if (this.mat !== 'RAW' && this.cache.valid) { const iD = ctx.getImageData(0,0,eC.width,eC.height); this.processPixels(iD, this.cache.T, this.cache.means, this.cache.space); ctx.putImageData(iD,0,0); }
@@ -597,21 +559,17 @@
             applyDP(isAR=false) {
                 if(!this.cache.valid) return;
                 let { V, D, means, space } = this.cache; let std = 0.05 + (this.intensity * 0.2);
-                
-                // STRATIGRAPHY ENGINE (ICA): Mathematically flattens the principal eigenvalue (D[0])
-                let icaDampening = 1.0 - this.icaDepth;
-                
-                let Dinv = [
-                    [(std/Math.sqrt(Math.max(D[0],0.0001))) * icaDampening, 0, 0], 
-                    [0, std/Math.sqrt(Math.max(D[1],0.0001)), 0], 
-                    [0, 0, std/Math.sqrt(Math.max(D[2],0.0001))]
-                ];
+                let Dinv = [[std/Math.sqrt(Math.max(D[0],0.0001)),0,0], [0,std/Math.sqrt(Math.max(D[1],0.0001)),0], [0,0,std/Math.sqrt(Math.max(D[2],0.0001))]];
                 let T = this.mult(this.mult(V, Dinv), this.trans(V)); this.cache.T = T;
+                
+                // MATH FIX: Target means set exactly for YUV/LAB (0.5, 0.0, 0.0)
+                let tM = [0.5, (space==='RGB')?0.5:0.0, (space==='RGB')?0.5:0.0];
+                
                 if(isAR) {
                     if(GLEngine.gl) { 
                         GLEngine.currentMatrix = [T[0][0], T[3][0], T[6][0], T[1][0], T[4][0], T[7][0], T[2][0], T[5][0], T[8][0]]; 
                         GLEngine.currentChannelMeans = means; 
-                        GLEngine.currentTargetMeans = [0.5, (space==='RGB')?0.5:0, (space==='RGB')?0.5:0]; 
+                        GLEngine.currentTargetMeans = tM; 
                         GLEngine.currentColorSpace = (space==='LAB')?2:(space==='YUV')?1:0; 
                         GLEngine.isActive = true; 
                     } return;
@@ -627,7 +585,7 @@
                     let scX = w/this.image.width, scY = iD.height/this.image.height;
                     bL = Math.floor(this.box.ix*scX); bT = Math.floor(this.box.iy*scY); bR = bL + Math.floor(this.box.iw*scX); bB = bT + Math.floor(this.box.ih*scY);
                 }
-                let tm1 = (sp==='RGB')?0.5:0; let tm2 = (sp==='RGB')?0.5:0;
+                let tm1 = (sp==='RGB')?0.5:0.0; let tm2 = (sp==='RGB')?0.5:0.0;
                 for(let i=0; i<pxl; i++) {
                     if(isArea) { let px = i%w, py=Math.floor(i/w); if(px<bL || px>bR || py<bT || py>bB) continue; }
                     let r=data[i*4], g=data[i*4+1], b=data[i*4+2];
@@ -694,8 +652,14 @@
                     let T=this.mult(this.mult(V,Dinv),this.trans(V)); this.topoYRE = new Uint8ClampedArray(d.length); this.topoYRE.set(d);
                     this.processPixels({data:this.topoYRE, width:w, height:h}, T, means, space);
                 }
-                this.topoL = {x:-0.5, y:-0.5, z:0.707}; this.topoExposure = 1.5; document.getElementById('topo-light-indicator').style.transform = `translate(-25px,-25px)`;
-                document.getElementById('topo-yre-toggle').checked = false; this.topoUseYRE = false; this.topoXRay = false; this.topoW = w; this.topoH = h; this.topoRaw = d; this.renderTopo();
+                
+                // Initialize default light (Center)
+                this.topoL = {x:0, y:0, z:1}; this.topoExposure = 1.5; 
+                let ind = document.getElementById('topo-light-indicator');
+                const tcRect = document.getElementById('topo-touch-zone').getBoundingClientRect();
+                ind.style.left = (tcRect.width/2) + 'px'; ind.style.top = (tcRect.height/2) + 'px';
+                
+                document.getElementById('topo-yre-toggle').checked = false; this.topoUseYRE = false; this.topoW = w; this.topoH = h; this.topoRaw = d; this.renderTopo();
             },
             renderTopo() {
                 if(!this.topoNormals) return; const c=document.getElementById('topo-canvas'); const pR=window.devicePixelRatio||1;
@@ -703,52 +667,70 @@
                 const tc=document.createElement('canvas'); tc.width=this.topoW; tc.height=this.topoH; const ctx=tc.getContext('2d'); const iD=ctx.createImageData(this.topoW, this.topoH); const d=iD.data;
                 const bd = (this.useYRE && this.topoYRE) ? this.topoYRE : this.topoRaw;
                 for(let i=0, n=0; i<d.length; i+=4, n+=3) {
-                    let nx = this.topoNormals[n], ny = this.topoNormals[n+1], nz = this.topoNormals[n+2];
-                    
-                    // INCISION X-RAY (PHASE CONGRUENCY PROXY)
-                    let edgeMag = Math.sqrt(nx*nx + ny*ny);
-                    if (this.topoXRay && edgeMag > 0.3) {
-                        d[i] = 0; d[i+1] = Math.min(255, edgeMag * 800); d[i+2] = 0; d[i+3] = 255;
-                    } else {
-                        let int = Math.pow(Math.max(0, nx*this.topoL.x + ny*this.topoL.y + nz*this.topoL.z), 1.5);
-                        d[i]=Math.min(255, bd[i]*int*this.topoExposure); d[i+1]=Math.min(255, bd[i+1]*int*this.topoExposure); d[i+2]=Math.min(255, bd[i+2]*int*this.topoExposure); d[i+3]=255;
-                    }
+                    let int = Math.pow(Math.max(0, this.topoNormals[n]*this.topoL.x + this.topoNormals[n+1]*this.topoL.y + this.topoNormals[n+2]*this.topoL.z), 1.5);
+                    d[i]=Math.min(255, bd[i]*int*this.topoExposure); d[i+1]=Math.min(255, bd[i+1]*int*this.topoExposure); d[i+2]=Math.min(255, bd[i+2]*int*this.topoExposure); d[i+3]=255;
                 }
                 ctx.putImageData(iD,0,0); const dCtx=c.getContext('2d'); dCtx.clearRect(0,0,c.width,c.height); dCtx.save(); dCtx.translate(c.width/2 + this.tx.px, c.height/2 + this.tx.py); dCtx.scale(this.tx.s, this.tx.s);
                 let ir=this.topoW/this.topoH, sr=c.width/c.height, dw, dh; if(ir>sr) {dw=c.width; dh=c.width/ir;} else {dh=c.height; dw=c.height*ir;} 
                 dCtx.translate(-dw/2, -dh/2); dCtx.drawImage(tc, 0, 0, dw, dh); dCtx.restore();
             },
             toggleTopoYRE(v) { this.useYRE = v; this.renderTopo(); },
-            toggleTopoXRay(v) { this.topoXRay = v; this.renderTopo(); },
-            updateTopoEx(v) { this.topoExposure = parseInt(v) / 10.0; this.renderTopo(); },
             saveTopo() { const a=document.createElement('a'); a.download=`Topo_${Date.now()}.png`; a.href=document.getElementById('topo-canvas').toDataURL('image/png'); a.click(); },
 
             // --- MODULE 3: RETROGRID ---
+            gridColorMap(v, ch) {
+                if(ch==='r') return [v,0,0];
+                if(ch==='g') return [0,v,0];
+                if(ch==='b') return [0,0,v];
+                if(ch==='h') { let h=v/255*6, x=255*(1-Math.abs(h%2-1)); if(h<1)return[255,x,0]; if(h<2)return[x,255,0]; if(h<3)return[0,255,x]; if(h<4)return[0,x,255]; if(h<5)return[x,0,255]; return[255,0,x]; }
+                if(ch==='a') return [v, 255-v, 0]; // Green to Red
+                if(ch==='b2') return [v, v, 255-v]; // Blue to Yellow
+                return [v,v,v]; // Sat, Val, Lightness
+            },
             initGrid() {
                 let w=this.image.width, h=this.image.height; const max=500; if(w>max||h>max){ let r=w/h; if(r>1){w=max;h=max/r;}else{h=max;w=max*r;} } w=Math.floor(w); h=Math.floor(h);
                 const tc=document.createElement('canvas'); tc.width=w; tc.height=h; const ctx=tc.getContext('2d', {willReadFrequently:true}); ctx.drawImage(this.image,0,0,w,h);
-                const d=ctx.getImageData(0,0,w,h).data; const chs=['r','g','b','h','s','v','l','a','b2']; const dict={}; chs.forEach(c=>dict[c]=new Uint8ClampedArray(w*h*4));
-                for(let i=0; i<d.length; i+=4) {
-                    let R=d[i], G=d[i+1], B=d[i+2]; dict.r[i]=R; dict.g[i]=G; dict.b[i]=B; dict.r[i+1]=R; dict.g[i+1]=G; dict.b[i+1]=B; dict.r[i+2]=R; dict.g[i+2]=G; dict.b[i+2]=B;
+                const d=ctx.getImageData(0,0,w,h).data; this.gridDict={}; this.gridChs.forEach(c=>this.gridDict[c]=new Uint8ClampedArray(w*h*4));
+                
+                // Extract clean channels
+                for(let i=0, j=0; i<d.length; i+=4, j++) {
+                    let R=d[i], G=d[i+1], B=d[i+2];
+                    this.gridDict.r[j] = R; this.gridDict.g[j] = G; this.gridDict.b[j] = B;
                     let rN=R/255, gN=G/255, bN=B/255, cx=Math.max(rN,gN,bN), cm=Math.min(rN,gN,bN), df=cx-cm, hv=0;
                     if(cx!==cm) { if(cx===rN) hv=(60*((gN-bN)/df)+360)%360; else if(cx===gN) hv=(60*((bN-rN)/df)+120)%360; else hv=(60*((rN-gN)/df)+240)%360; }
-                    let H=Math.floor((hv/360)*255), S=Math.floor((cx===0?0:df/cx)*255), V=Math.floor(cx*255);
-                    dict.h[i]=H; dict.s[i]=S; dict.v[i]=V; dict.h[i+1]=H; dict.s[i+1]=S; dict.v[i+1]=V; dict.h[i+2]=H; dict.s[i+2]=S; dict.v[i+2]=V;
-                    let L=0.21*R+0.71*G+0.07*B, A=R-L+128, B2=B-L+128;
-                    dict.l[i]=L; dict.a[i]=A; dict.b2[i]=B2; dict.l[i+1]=L; dict.a[i+1]=A; dict.b2[i+1]=B2; dict.l[i+2]=L; dict.a[i+2]=A; dict.b2[i+2]=B2;
-                    chs.forEach(c=>dict[c][i+3]=255);
+                    this.gridDict.h[j] = Math.floor((hv/360)*255); this.gridDict.s[j] = Math.floor((cx===0?0:df/cx)*255); this.gridDict.v[j] = Math.floor(cx*255);
+                    let L=0.21*R+0.71*G+0.07*B;
+                    this.gridDict.l[j] = L; this.gridDict.a[j] = R-L+128; this.gridDict.b2[j] = B-L+128;
                 }
-                this.gridDict = {}; this.gridW = w; this.gridH = h;
-                chs.forEach(c=>{
-                    let min=255, max=0, a=dict[c]; for(let i=0;i<a.length;i+=4){ if(a[i]<min)min=a[i]; if(a[i]>max)max=a[i]; }
-                    if(max>min){ let r=max-min; for(let i=0;i<a.length;i+=4){let v=((a[i]-min)/r)*255; a[i]=v; a[i+1]=v; a[i+2]=v;} }
-                    this.gridDict[c] = a; const cnv=document.getElementById('grid-'+c); cnv.width=w; cnv.height=h; const cx=cnv.getContext('2d'); const iD=cx.createImageData(w,h); iD.data.set(a); cx.putImageData(iD,0,0);
+                this.gridW = w; this.gridH = h;
+                
+                // Color Map and Render
+                this.gridChs.forEach(c=>{
+                    let a=this.gridDict[c]; let min=255, max=0; for(let i=0;i<a.length;i++){ if(a[i]<min)min=a[i]; if(a[i]>max)max=a[i]; }
+                    const out = new Uint8ClampedArray(w*h*4);
+                    if(max>min){ 
+                        let r=max-min; 
+                        for(let i=0;i<a.length;i++){ 
+                            let val = ((a[i]-min)/r)*255;
+                            let rgb = this.gridColorMap(val, c);
+                            out[i*4]=rgb[0]; out[i*4+1]=rgb[1]; out[i*4+2]=rgb[2]; out[i*4+3]=255; 
+                            a[i]=val; // save normalized value
+                        } 
+                    }
+                    const cnv=document.getElementById('grid-'+c); cnv.width=w; cnv.height=h; const cx=cnv.getContext('2d'); const iD=cx.createImageData(w,h); iD.data.set(out); cx.putImageData(iD,0,0);
                 });
             },
             openGridModal(ch, name) {
                 this.activeGridChannel = ch; document.getElementById('grid-modal-label').innerText = name; document.getElementById('grid-modal').style.display = 'flex';
                 this.tx = { s: 1, px: 0, py: 0 }; this.gridExposure = 1.0; document.getElementById('grid-exposure-slider').value = 10;
                 setTimeout(() => { this.renderGridModal(); }, 50); 
+            },
+            cycleGrid(dir) {
+                let idx = this.gridChs.indexOf(this.activeGridChannel);
+                idx = (idx + dir + this.gridChs.length) % this.gridChs.length;
+                this.activeGridChannel = this.gridChs[idx];
+                document.getElementById('grid-modal-label').innerText = this.gridNames[idx];
+                this.renderGridModal();
             },
             closeGridModal() { document.getElementById('grid-modal').style.display = 'none'; this.activeGridChannel = null; },
             updateGridExposure(v) { this.gridExposure = parseInt(v) / 10.0; this.renderGridModal(); },
@@ -757,7 +739,11 @@
                 let rect = c.parentElement.getBoundingClientRect(); if(rect.width===0) rect={width:window.innerWidth, height:window.innerHeight}; c.width = Math.floor(rect.width * pR); c.height = Math.floor(rect.height * pR);
                 const tc = document.createElement('canvas'); tc.width = this.gridW; tc.height = this.gridH; const ctx = tc.getContext('2d');
                 const iD = ctx.createImageData(this.gridW, this.gridH); const baseData = this.gridDict[this.activeGridChannel];
-                for(let i=0; i<baseData.length; i+=4) { iD.data[i] = Math.min(255, baseData[i]*this.gridExposure); iD.data[i+1] = Math.min(255, baseData[i+1]*this.gridExposure); iD.data[i+2] = Math.min(255, baseData[i+2]*this.gridExposure); iD.data[i+3] = 255; }
+                for(let i=0; i<baseData.length; i++) { 
+                    let val = Math.min(255, baseData[i]*this.gridExposure);
+                    let rgb = this.gridColorMap(val, this.activeGridChannel);
+                    iD.data[i*4]=rgb[0]; iD.data[i*4+1]=rgb[1]; iD.data[i*4+2]=rgb[2]; iD.data[i*4+3]=255; 
+                }
                 ctx.putImageData(iD,0,0); const dCtx = c.getContext('2d'); dCtx.clearRect(0,0,c.width,c.height); dCtx.save();
                 dCtx.translate(c.width/2 + this.tx.px, c.height/2 + this.tx.py); dCtx.scale(this.tx.s, this.tx.s);
                 let ir=this.gridW/this.gridH, sr=c.width/c.height, dw, dh; if(ir>sr) { dw=c.width; dh=c.width/ir; } else { dh=c.height; dw=c.height*ir; }
@@ -775,7 +761,7 @@
             setARMatrix(m) {
                 document.querySelectorAll('.ar-matrix-btn').forEach(b=>b.classList.remove('active')); document.getElementById('ar-mat-'+m).classList.add('active'); this.mat = m;
                 if(m!=='RAW') {
-                    const video = CameraEngine.getVideoElement(); if(video.videoWidth === 0) return;
+                    const video = CameraEngine.getVideoElement(); if(!video || video.videoWidth === 0) return;
                     const c=document.createElement('canvas'); c.width=256; c.height=256; c.getContext('2d').drawImage(video,0,0,256,256);
                     let sp = (m==='LDS')?'LAB':(m==='RGB'||m==='CRGB')?'RGB':'YUV'; this.calcMath(c.getContext('2d').getImageData(0,0,256,256).data, 256, 256, sp); 
                     const canvas = document.getElementById('gl-canvas'); if(!GLEngine.gl) GLEngine.init(canvas); this.applyDP(true);
@@ -783,23 +769,20 @@
             },
             loopAR() {
                 if(!this.arActive) return; const video = CameraEngine.getVideoElement();
-                if(video && video.readyState === video.HAVE_ENOUGH_DATA) {
+                if(video && video.readyState >= 2 && video.videoWidth > 0) {
                     const c=document.getElementById('gl-canvas'); if(c.width!==video.videoWidth) {c.width=video.videoWidth; c.height=video.videoHeight;}
                     if(this.mat!=='RAW' && GLEngine.gl && GLEngine.isActive && this.cache.valid) {
-                        if(!this.arVideoCanvas) { this.arVideoCanvas = document.createElement('canvas'); this.arCtx = this.arVideoCanvas.getContext('2d', {willReadFrequently: true}); }
-                        if(this.arVideoCanvas.width !== video.videoWidth) { this.arVideoCanvas.width = video.videoWidth; this.arVideoCanvas.height = video.videoHeight; }
-                        this.arCtx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight); GLEngine.render(this.arVideoCanvas);
+                        GLEngine.render(video);
                     } else if(GLEngine.gl) { GLEngine.gl.clearColor(0,0,0,0); GLEngine.gl.clear(GLEngine.gl.COLOR_BUFFER_BIT); }
                 }
                 requestAnimationFrame(()=>this.loopAR());
             },
             captureAR() {
-                const video = CameraEngine.getVideoElement(); const w=video.videoWidth, h=video.videoHeight; if(w===0) return;
+                const video = CameraEngine.getVideoElement(); const w=video.videoWidth, h=video.videoHeight; if(!video || w===0) return;
                 const r=video.getBoundingClientRect(), vR=w/h, cR=r.width/r.height; let dw=w, dh=h, sx=0, sy=0;
                 if(vR>cR) { dw=h*cR; sx=(w-dw)/2; } else { dh=w/cR; sy=(h-dh)/2; }
                 const c=document.createElement('canvas'); c.width=dw; c.height=dh; c.getContext('2d').drawImage(video, sx, sy, dw, dh, 0, 0, dw, dh);
-                this.image=c; this.arActive=false; CameraEngine.stop(); this.resetDP(); this.switch('state-editor'); 
-                setTimeout(()=> { this.resizeUICanvas(); this.renderDP(); this.runTextureNuke(); }, 150);
+                this.image=c; this.arActive=false; CameraEngine.stop(); this.resetDP(); this.switch('state-editor'); setTimeout(()=> { this.resizeUICanvas(); this.renderDP(); }, 150);
             }
         };
 
