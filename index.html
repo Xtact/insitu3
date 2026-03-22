@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Forensics Suite Pro</title>
     <style>
+        /* --- CORE CSS --- */
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         html, body { width: 100%; height: 100%; position: fixed; top: 0; left: 0; overflow: hidden !important; background-color: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, sans-serif; touch-action: none; }
 
         .app-state { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; background: #000; z-index: 1; }
         .active-state { display: flex; z-index: 10; }
 
+        /* HUB */
         #state-home { justify-content: center; align-items: center; background: #000; padding: 20px;}
         .app-title { font-size: 32px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 5px; text-align: center;}
         .app-subtitle { font-size: 15px; color: #888; margin-bottom: 30px; text-align: center;}
@@ -24,6 +26,7 @@
         .mod-text h3 { font-size: 16px; font-weight: 600; margin-bottom: 3px; color: #fff;}
         .mod-text p { font-size: 13px; color: #888; }
 
+        /* EDITORS */
         .editor-top-bar { display: flex; justify-content: space-between; align-items: center; padding: env(safe-area-inset-top, 20px) 20px 15px; background: #000; z-index: 20; border-bottom: 1px solid #111;}
         .text-btn { background: none; border: none; color: #fff; font-size: 17px; cursor: pointer; }
         .text-btn.bold { font-weight: 600; color: #FF2A5F; }
@@ -34,6 +37,7 @@
         .primary-btn { background: #FF2A5F; color: white; border: none; padding: 10px 20px; border-radius: 25px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .blue-btn { background: #3b82f6; }
 
+        /* CANVAS */
         .canvas-container { position: relative; flex: 1; width: 100%; overflow: hidden; background: #111; touch-action: none; }
         .checkerboard-bg { background-image: linear-gradient(45deg, #1f1f1f 25%, transparent 25%), linear-gradient(-45deg, #1f1f1f 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1f1f1f 75%), linear-gradient(-45deg, transparent 75%, #1f1f1f 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; touch-action: none; }
@@ -43,6 +47,7 @@
         @keyframes scanAnim { 0% { top: 0; opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
         .scanning { display: block !important; animation: scanAnim 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 
+        /* TOOLS */
         #color-loupe { position: absolute; width: 64px; height: 64px; border-radius: 50%; border: 4px solid white; background-color: transparent; box-shadow: 0 4px 15px rgba(0,0,0,0.8); z-index: 9999; display: none; pointer-events: none; transform: translate(-50%, -50%); }
         .loupe-crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 14px; height: 14px; border: 1.5px solid rgba(255,255,255,0.9); border-radius: 50%; box-shadow: 0 0 3px rgba(0,0,0,0.5); }
         .floating-compare { position: absolute; top: 15px; right: 15px; width: 44px; height: 44px; border-radius: 22px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: white; display: flex; justify-content: center; align-items: center; z-index: 10; cursor: pointer; backdrop-filter: blur(5px); }
@@ -64,6 +69,7 @@
         .matrix-btn { background: #222; color: #888; padding: 12px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; border: 1px solid #333; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
         .matrix-btn.active { background: #fff; color: #000; border-color: #fff; transform: scale(1.05); }
 
+        /* TOGGLES */
         .switch { position: relative; display: inline-block; width: 40px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider-switch { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .3s; border-radius: 24px; }
@@ -71,18 +77,21 @@
         input:checked + .slider-switch { background-color: #4ade80; }
         input:checked + .slider-switch:before { transform: translateX(16px); }
 
+        /* TOPOLIGHT HUD */
         #topo-light-indicator { position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 0 15px #fff; z-index: 10; pointer-events: none; transition: transform 0.1s; }
 
+        /* RETROGRID */
         #grid-container { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; gap: 2px; flex: 1; background: #000; padding: 2px; overflow-y: auto; }
-        .grid-item { position: relative; background: #111; overflow: hidden; display: flex; justify-content: center; align-items: center; cursor: pointer; aspect-ratio: 1/1; }
+        .grid-item { position: relative; background: #111; overflow: hidden; display: flex; justify-content: center; align-items: center; cursor: pointer; aspect-ratio: 1/1; border: 1px solid transparent; }
         .grid-item canvas { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-        .grid-item span { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.7); padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; pointer-events: none; text-align: center; }
+        .grid-item span { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.8); padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; pointer-events: none; text-align: center; }
         
         #grid-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:99999; background:#000; flex-direction:column; }
         #grid-modal-touch-zone { position:relative; flex:1; width:100%; overflow:hidden; touch-action:none; }
         .grid-nav-btn { position:absolute; top:50%; transform:translateY(-50%); width: 44px; height: 60px; background: rgba(0,0,0,0.6); color: white; font-size: 24px; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 100; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); }
         .tune-deck { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px 20px; background: #000; border-top: 1px solid #222; }
 
+        /* AR VIEW */
         #camera-stream, #gl-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         #gl-canvas { z-index: 1; pointer-events: none; }
         .ar-top-bar { position: absolute; top: 0; left: 0; width: 100%; padding: env(safe-area-inset-top, 20px) 20px; display: flex; justify-content: space-between; z-index: 10; pointer-events: none; }
@@ -321,11 +330,11 @@
                 <input type="range" min="0" max="100" value="50" oninput="App.updateIntensity(this.value, true)">
             </div>
             <div id="ar-matrix-carousel" style="display: flex; overflow-x: auto; gap: 10px; width: 100%; padding: 0 20px; scrollbar-width: none;">
-                <button class="matrix-btn raw-btn active" id="ar-mat-RAW" onclick="App.setARMatrix('RAW')">RAW</button>
-                <button class="matrix-btn" id="ar-mat-YRE" onclick="App.setARMatrix('YRE')">YRE</button>
-                <button class="matrix-btn" id="ar-mat-CRGB" onclick="App.setARMatrix('CRGB')">CRGB</button>
-                <button class="matrix-btn" id="ar-mat-YBK" onclick="App.setARMatrix('YBK')">YBK</button>
-                <button class="matrix-btn" id="ar-mat-LDS" onclick="App.setARMatrix('LDS')">LDS</button>
+                <button class="matrix-btn ar-matrix-btn raw-btn active" id="ar-mat-RAW" onclick="App.setARMatrix('RAW')">RAW</button>
+                <button class="matrix-btn ar-matrix-btn" id="ar-mat-YRE" onclick="App.setARMatrix('YRE')">YRE</button>
+                <button class="matrix-btn ar-matrix-btn" id="ar-mat-CRGB" onclick="App.setARMatrix('CRGB')">CRGB</button>
+                <button class="matrix-btn ar-matrix-btn" id="ar-mat-YBK" onclick="App.setARMatrix('YBK')">YBK</button>
+                <button class="matrix-btn ar-matrix-btn" id="ar-mat-LDS" onclick="App.setARMatrix('LDS')">LDS</button>
             </div>
             <button id="shutter-btn" onclick="App.captureAR()"></button>
             <p class="ar-hint">Tap shutter to freeze frame and auto-nuke grain.</p>
@@ -379,10 +388,9 @@
             },
             render(videoElement) {
                 if(!this.gl || !this.isActive) return;
-                this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
                 this.gl.bindTexture(this.gl.TEXTURE_2D, this.tex); 
                 this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, videoElement);
-                const m = this.currentMatrix; const glMatrix = new Float32Array([m[0][0], m[1][0], m[2][0], m[0][1], m[1][1], m[2][1], m[0][2], m[1][2], m[2][2]]);
+                const m = this.currentMatrix; const glMatrix = new Float32Array([m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]]);
                 this.gl.uniformMatrix3fv(this.gl.getUniformLocation(this.program, "u_matrix"), false, glMatrix); 
                 this.gl.uniform3fv(this.gl.getUniformLocation(this.program, "u_means"), this.currentChannelMeans); 
                 this.gl.uniform3fv(this.gl.getUniformLocation(this.program, "u_targetMeans"), this.currentTargetMeans); 
@@ -534,19 +542,35 @@
                     const img = new Image();
                     img.onload = () => {
                         this.image = img; this.tx = { s: 1, px: 0, py: 0 }; 
-                        if(mod === 'dp') { this.resetDP(); this.switch('state-editor'); setTimeout(() => { this.resizeUICanvas(); this.renderDP(); }, 300); }
-                        if(mod === 'topo') { this.switch('state-topolight'); setTimeout(() => this.initTopo(), 300); } // 300ms for iPhone safety
+                        if(mod === 'dp') { this.resetDP(); this.switch('state-editor'); this.waitForDimensions(() => this.renderDP(), 'ui-canvas'); }
+                        if(mod === 'topo') { this.switch('state-topolight'); this.waitForDimensions(() => this.initTopo(), 'topo-touch-zone'); } // iOS Wait Fix
+                        
                         if(mod === 'grid-prep') { 
                             this.rgPrepData = { exp: 100, cont: 100, bp: 0, sharp: 0 };
                             document.getElementById('rg-prep-exp').value = 100; document.getElementById('rg-prep-cont').value = 100;
                             document.getElementById('rg-prep-bp').value = 0; document.getElementById('rg-prep-sharp').value = 0;
-                            this.switch('state-retrogrid-prep'); setTimeout(() => this.renderRGPrep(), 300); 
+                            this.switch('state-retrogrid-prep'); 
+                            this.waitForDimensions(() => this.renderRGPrep(), 'rg-prep-touch-zone'); 
                         }
                     }; img.src = ev.target.result;
                 }; r.readAsDataURL(file); e.target.value = '';
             },
 
-            zoomMod(factor) { this.tx.s = Math.max(0.5, Math.min(this.tx.s * factor, 10)); if(this.module==='dp') this.renderDP(); else if(this.module==='topo') this.renderTopo(); else if(this.module==='grid-prep') this.renderRGPrep(); else if(this.module==='grid') this.renderGridModal(); },
+            // FAIL-SAFE: Guarantees container is open and sized before executing Heavy Math
+            waitForDimensions(fn, elementId) {
+                let el = document.getElementById(elementId);
+                let rect = el.parentElement.getBoundingClientRect();
+                if(rect.width === 0) { requestAnimationFrame(() => this.waitForDimensions(fn, elementId)); } 
+                else { setTimeout(() => { if(this.module==='dp') this.resizeUICanvas(); fn(); }, 150); } // iOS Safety Delay
+            },
+
+            zoomMod(factor) { 
+                this.tx.s = Math.max(0.5, Math.min(this.tx.s * factor, 10)); 
+                if(this.module==='dp') this.renderDP(); 
+                else if(this.module==='topo') this.renderTopo(); 
+                else if(this.module==='grid-prep') this.renderRGPrep();
+                else if(this.module==='grid') this.renderGridModal(); 
+            },
 
             // --- DP ENGINE ---
             resetDP() {
@@ -562,14 +586,24 @@
                 if(t !== 'area') { this.box.d = false; } this.resizeUICanvas(); this.renderDP();
                 if(this.mat !== 'RAW' && t !== 'wand' && t !== 'area') { this.buildDP(); this.applyDP(); }
             },
+            
             runTextureNuke() {
-                const scanner = document.getElementById('scanner-line'); scanner.classList.add('scanning');
+                const scanner = document.getElementById('scanner-line');
+                scanner.classList.add('scanning');
                 const c = document.createElement('canvas'); c.width = this.image.width; c.height = this.image.height; const ctx = c.getContext('2d');
                 ctx.filter = 'blur(1.5px)'; ctx.drawImage(this.image, 0, 0); ctx.filter = 'none';
                 const newImg = new Image();
-                newImg.onload = () => { this.image = newImg; setTimeout(() => { scanner.classList.remove('scanning'); this.hasNuked = true; this.buildDP(); this.applyDP(); }, 1200); };
+                newImg.onload = () => {
+                    this.image = newImg;
+                    setTimeout(() => { 
+                        scanner.classList.remove('scanning'); 
+                        this.hasNuked = true;
+                        this.buildDP(); this.applyDP(); 
+                    }, 1200);
+                };
                 newImg.src = c.toDataURL();
             },
+
             setMatrix(m) {
                 this.mat = m; ['RAW','YRE','CRGB','YBK','LDS'].forEach(id => document.getElementById('mat-'+id).classList.remove('active'));
                 document.getElementById('mat-'+m).classList.add('active'); document.getElementById('active-colorspace-label').innerText = m;
@@ -581,7 +615,7 @@
             },
             updateTolerance(v) { this.tol = parseInt(v); if(this.tool==='wand' && this.cache.valid) this.applyDP(); },
             updateIntensity(v, isAR=false) { this.intensity = parseInt(v)/100; if(this.mat!=='RAW') this.applyDP(isAR); },
-            updateICA(v) { this.icaDepth = parseInt(v)/100; if(this.mat!=='RAW') this.applyDP(false); },
+            updateICA(v) { this.icaDepth = parseInt(v)/100; if(this.mat!=='RAW') this.applyDP(false); }, 
             
             saveDP() {
                 const eC = document.createElement('canvas'); const ctx = eC.getContext('2d'); eC.width = this.image.width; eC.height = this.image.height; ctx.drawImage(this.image, 0,0);
@@ -609,7 +643,12 @@
                 means[0]/=n; means[1]/=n; means[2]/=n; let cov = [[0,0,0],[0,0,0],[0,0,0]];
                 for (let i=0; i<n; i++) { let c0=cData[i*3]-means[0], c1=cData[i*3+1]-means[1], c2=cData[i*3+2]-means[2]; cov[0][0]+=c0*c0; cov[0][1]+=c0*c1; cov[0][2]+=c0*c2; cov[1][1]+=c1*c1; cov[1][2]+=c1*c2; cov[2][2]+=c2*c2; }
                 cov[0][0]/=n; cov[0][1]/=n; cov[0][2]/=n; cov[1][1]/=n; cov[1][2]/=n; cov[2][2]/=n; cov[1][0]=cov[0][1]; cov[2][0]=cov[0][2]; cov[2][1]=cov[1][2];
-                let { V, D } = this.eigen(cov); this.cache = { valid: true, type: this.mat, means: means, V: V, D: D, space: sp };
+                let { V, D } = this.eigen(cov); 
+                
+                // AR Washout Clamp
+                if (this.arActive) { D[0] = Math.max(D[0], 0.005); D[1] = Math.max(D[1], 0.005); D[2] = Math.max(D[2], 0.005); }
+
+                this.cache = { valid: true, type: this.mat, means: means, V: V, D: D, space: sp };
             },
 
             buildDP(isAR=false) {
@@ -626,7 +665,7 @@
             applyDP(isAR=false) {
                 if(!this.cache.valid) return;
                 let { V, D, means, space } = this.cache; 
-                let std = (isAR) ? 0.02 + (this.intensity * 0.1) : 0.05 + (this.intensity * 0.2); // Tame AR blowout
+                let std = isAR ? 0.02 + (this.intensity * 0.1) : 0.05 + (this.intensity * 0.2);
                 let icaDamp = 1.0 - this.icaDepth;
                 let Dinv = [[(std/Math.sqrt(Math.max(D[0],0.0001)))*icaDamp,0,0], [0,std/Math.sqrt(Math.max(D[1],0.0001)),0], [0,0,std/Math.sqrt(Math.max(D[2],0.0001))]];
                 let T = this.mult(this.mult(V, Dinv), this.trans(V)); this.cache.T = T;
@@ -705,9 +744,10 @@
 
             // --- MODULE 2: TOPOLIGHT ---
             initTopo() {
-                // iPhone Safari Limit Fix: Downscale Max to 800px
+                if(!this.image || this.image.width === 0) return;
                 let w = this.image.width, h = this.image.height; const max = 800;
                 if(w>max || h>max){ let r=w/h; if(r>1){w=max; h=max/r;} else {h=max; w=max*r;} } w=Math.floor(w); h=Math.floor(h);
+                
                 const tc=document.createElement('canvas'); tc.width=w; tc.height=h; const ctx=tc.getContext('2d', {willReadFrequently:true}); ctx.drawImage(this.image,0,0,w,h);
                 
                 const sourceData = ctx.getImageData(0,0,w,h).data; 
@@ -736,8 +776,11 @@
                 document.getElementById('topo-yre-toggle').checked = false; this.topoUseYRE = false; this.topoXRay = false; this.topoW = w; this.topoH = h; this.renderTopo();
             },
             renderTopo() {
-                if(!this.topoNormals) return; const c=document.getElementById('topo-canvas'); const pR=window.devicePixelRatio||1;
+                if(!this.topoRaw || this.topoW === 0) return;
+                const c=document.getElementById('topo-canvas'); const pR=window.devicePixelRatio||1;
                 let rect=c.parentElement.getBoundingClientRect(); if(rect.width===0) rect={width:window.innerWidth, height:window.innerHeight}; c.width=Math.floor(rect.width*pR); c.height=Math.floor(rect.height*pR);
+                const dCtx=c.getContext('2d'); dCtx.clearRect(0,0,c.width,c.height);
+                
                 const tc=document.createElement('canvas'); tc.width=this.topoW; tc.height=this.topoH; const ctx=tc.getContext('2d'); const iD=ctx.createImageData(this.topoW, this.topoH); const d=iD.data;
                 const bd = (this.useYRE && this.topoYRE) ? this.topoYRE : this.topoRaw;
                 for(let i=0, n=0; i<d.length; i+=4, n+=3) {
@@ -748,7 +791,7 @@
                         d[i]=Math.min(255, bd[i]*int*this.topoExposure); d[i+1]=Math.min(255, bd[i+1]*int*this.topoExposure); d[i+2]=Math.min(255, bd[i+2]*int*this.topoExposure); d[i+3]=255;
                     }
                 }
-                ctx.putImageData(iD,0,0); const dCtx=c.getContext('2d'); dCtx.clearRect(0,0,c.width,c.height); dCtx.save(); dCtx.translate(c.width/2 + this.tx.px, c.height/2 + this.tx.py); dCtx.scale(this.tx.s, this.tx.s);
+                ctx.putImageData(iD,0,0); dCtx.save(); dCtx.translate(c.width/2 + this.tx.px, c.height/2 + this.tx.py); dCtx.scale(this.tx.s, this.tx.s);
                 let ir=this.topoW/this.topoH, sr=c.width/c.height, dw, dh; if(ir>sr) {dw=c.width; dh=c.width/ir;} else {dh=c.height; dw=c.height*ir;} 
                 dCtx.translate(-dw/2, -dh/2); dCtx.drawImage(tc, 0, 0, dw, dh); dCtx.restore();
             },
@@ -816,7 +859,7 @@
                 if(ch==='h') { let h=v/255*6, x=255*(1-Math.abs(h%2-1)); if(h<1)return[255,x,0]; if(h<2)return[x,255,0]; if(h<3)return[0,255,x]; if(h<4)return[0,x,255]; if(h<5)return[x,0,255]; return[255,0,x]; }
                 if(ch==='a') return [v, 255-v, 0]; 
                 if(ch==='b2') return [255-v, v, v]; 
-                if(ch==='edge') return [0, v, 0]; // X-Ray Green
+                if(ch==='edge') return [v, v, v]; // Professional X-Ray (White edges on black)
                 return [v,v,v]; 
             },
             initGrid() {
@@ -844,7 +887,7 @@
                         let dx = -1*gy(x-1,y-1)+1*gy(x+1,y-1)-2*gy(x-1,y)+2*gy(x+1,y)-1*gy(x-1,y+1)+1*gy(x+1,y+1);
                         let dy = -1*gy(x-1,y-1)-2*gy(x,y-1)-1*gy(x+1,y-1)+1*gy(x-1,y+1)+2*gy(x,y+1)+1*gy(x+1,y+1);
                         dx = dx/4.0; dy = dy/4.0; // Tame the math to prevent rock grain blowout
-                        this.gridDict.edge[y*w + x] = Math.min(255, Math.sqrt(dx*dx + dy*dy) * 2);
+                        this.gridDict.edge[y*w + x] = Math.min(255, Math.sqrt(dx*dx + dy*dy) * 1.5);
                     }
                 }
 
@@ -858,13 +901,9 @@
                     
                     let div = document.createElement('div'); div.className = 'grid-item'; div.onclick = () => this.openGridModal(c.id, c.n);
                     
-                    // STANDOUT STYLE FOR X-RAY
-                    if (c.id === 'edge') { div.style.border = "2px solid #00ffff"; }
-                    
                     let cnv = document.createElement('canvas'); cnv.id = 'grid-'+c.id; cnv.width=w; cnv.height=h;
                     let ctx = cnv.getContext('2d'); const iD = ctx.createImageData(w,h); iD.data.set(out); ctx.putImageData(iD,0,0);
                     let spn = document.createElement('span'); spn.innerText = c.n;
-                    if (c.id === 'edge') { spn.style.color = '#00ffff'; spn.style.fontSize = '12px'; }
                     
                     div.appendChild(cnv); div.appendChild(spn); gc.appendChild(div);
                 });
@@ -938,13 +977,17 @@
             },
             closeAR() { this.arActive=false; CameraEngine.stop(); this.activeModule=null; this.switch('state-home'); },
             setARMatrix(m) {
-                document.querySelectorAll('.ar-matrix-btn').forEach(b=>b.classList.remove('active')); document.getElementById('ar-mat-'+m).classList.add('active'); this.mat = m;
+                // FIXED: Explicitly remove class to fix HTML UI state sticking
+                document.querySelectorAll('.ar-matrix-btn').forEach(b=>b.classList.remove('active')); 
+                document.getElementById('ar-mat-'+m).classList.add('active'); 
+                this.mat = m;
+                
                 if(m!=='RAW') {
                     const video = CameraEngine.getVideoElement(); if(!video || video.videoWidth === 0) return;
                     const c=document.createElement('canvas'); c.width=256; c.height=256; 
                     
-                    // AR FIX: Grab center 50% of the screen so iOS auto-exposure doesn't blow out the math
                     let sW = video.videoWidth * 0.5, sH = video.videoHeight * 0.5;
+                    if(sW < 10) return; // Safety check
                     c.getContext('2d').drawImage(video, video.videoWidth*0.25, video.videoHeight*0.25, sW, sH, 0, 0, 256, 256);
                     
                     let sp = (m==='LDS')?'LAB':(m==='RGB'||m==='CRGB')?'RGB':'YUV'; this.calcMath(c.getContext('2d').getImageData(0,0,256,256).data, 256, 256, sp); 
@@ -968,7 +1011,7 @@
                 const r=video.getBoundingClientRect(), vR=w/h, cR=r.width/r.height; let dw=w, dh=h, sx=0, sy=0;
                 if(vR>cR) { dw=h*cR; sx=(w-dw)/2; } else { dh=w/cR; sy=(h-dh)/2; }
                 const c=document.createElement('canvas'); c.width=dw; c.height=dh; c.getContext('2d').drawImage(video, sx, sy, dw, dh, 0, 0, dw, dh);
-                this.image=c; this.arActive=false; CameraEngine.stop(); this.resetDP(); this.switch('state-editor'); setTimeout(()=> { this.resizeUICanvas(); this.renderDP(); }, 150);
+                this.image=c; this.arActive=false; CameraEngine.stop(); this.resetDP(); this.switch('state-editor'); setTimeout(()=> { this.resizeUICanvas(); this.renderDP(); this.runTextureNuke(); }, 150);
             }
         };
 
