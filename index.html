@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Forensics Suite Pro</title>
+    <style>
+        /* --- CORE CSS --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+        html, body { width: 100%; height: 100%; position: fixed; top: 0; left: 0; overflow: hidden !important; background-color: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, sans-serif; touch-action: none; }
+
+        .app-state { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; background: #000; z-index: 1; }
+        .active-state { display: flex; z-index: 10; }
+
+        /* HUB */
+        #state-home { justify-content: center; align-items: center; background: #000; padding: 20px;}
+        .app-title { font-size: 32px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 5px; text-align: center;}
+        .app-subtitle { font-size: 15px; color: #888; margin-bottom: 30px; text-align: center;}
+        .module-cards { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 350px; }
+
+        .module-card { 
+            position: relative; overflow: hidden; display: flex; align-items: center; background: #111; border-radius: 16px; 
+            padding: 15px; cursor: pointer; border: 1px solid #222; transition: transform 0.1s; 
+            width: 100%; text-align: left; color: #fff; font-family: inherit;
+        }
+        .module-card:active { transform: scale(0.97); background: #1a1a1a; }
+        .mod-file-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
+        .mod-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 22px; margin-right: 15px; z-index: 1;}
+        .mod-text { z-index: 1; pointer-events: none; }
+        .mod-text h3 { font-size: 16px; font-weight: 600; margin-bottom: 3px; color: #fff;}
+        .mod-text p { font-size: 13px; color: #888; }
+
+        /* EDITORS */
+        .editor-top-bar { display: flex; justify-content: space-between; align-items: center; padding: env(safe-area-inset-top, 20px) 20px 15px; background: #000; z-index: 20; border-bottom: 1px solid #111;}
+        .text-btn { background: none; border: none; color: #fff; font-size: 17px; cursor: pointer; }
+        .text-btn.bold { font-weight: 600; color: #FF2A5F; }
+        .icon-btn { background: #222; border: none; color: white; width: 44px; height: 44px; border-radius: 22px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        .icon-btn svg { width: 22px; height: 22px; pointer-events: none; }
+        .icon-btn.active { background: #FF2A5F; box-shadow: 0 0 10px rgba(255,42,95,0.4); }
+        .icon-btn.disabled { opacity: 0.3; pointer-events: none; }
+
+        /* CANVAS & SCANNER */
+        .canvas-container { position: relative; flex: 1; width: 100%; overflow: hidden; background: #111; touch-action: none; }
+        .checkerboard-bg { background-image: linear-gradient(45deg, #1f1f1f 25%, transparent 25%), linear-gradient(-45deg, #1f1f1f 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1f1f1f 75%), linear-gradient(-45deg, transparent 75%, #1f1f1f 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
+        #static-canvas, #ui-canvas, #topo-canvas, #grid-modal-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+        #ui-canvas { z-index: 2; pointer-events: auto; } 
+
+        #scanner-line { position: absolute; left: 0; width: 100%; height: 3px; background: #00ffff; box-shadow: 0 0 20px 5px #00ffff; z-index: 50; display: none; top: 0; }
+        @keyframes scanAnim { 0% { top: 0; opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+        .scanning { display: block !important; animation: scanAnim 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+        /* TOOLS */
+        #color-loupe { position: absolute; width: 64px; height: 64px; border-radius: 50%; border: 4px solid white; background-color: transparent; box-shadow: 0 4px 15px rgba(0,0,0,0.8); z-index: 9999; display: none; pointer-events: none; transform: translate(-50%, -50%); }
+        .loupe-crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 14px; height: 14px; border: 1.5px solid rgba(255,255,255,0.9); border-radius: 50%; box-shadow: 0 0 3px rgba(0,0,0,0.5); }
+        .floating-compare { position: absolute; top: 15px; right: 15px; width: 44px; height: 44px; border-radius: 22px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: white; display: flex; justify-content: center; align-items: center; z-index: 10; cursor: pointer; backdrop-filter: blur(5px); }
+        .zoom-controls { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 15px; z-index: 10; }
+        .zoom-btn { width: 44px; height: 44px; border-radius: 22px; background: rgba(0,0,0,0.6); color: white; font-size: 24px; font-weight: bold; border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(5px); cursor: pointer; }
+
+        .editor-bottom-bar { background: #000; padding-bottom: env(safe-area-inset-bottom, 20px); z-index: 20; }
+        .tool-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #222; }
+        .tool-group { display: flex; gap: 12px; align-items: center;}
+        .slider-container { padding: 10px 20px; border-bottom: 1px solid #111; }
+        input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: #333; outline: none; margin-top: 8px;}
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; border-radius: 14px; background: #fff; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+
+        .carousel-header { display: flex; justify-content: center; align-items: center; padding: 10px 0 5px; }
+        .carousel-header span { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        #active-colorspace-label { color: #FF2A5F; font-size: 12px;}
+        #matrix-carousel, #ar-matrix-carousel { display: flex; overflow-x: auto; padding: 5px 20px 15px; gap: 12px; scrollbar-width: none; }
+        #matrix-carousel::-webkit-scrollbar, #ar-matrix-carousel::-webkit-scrollbar { display: none; }
+        .matrix-btn { background: #222; color: #888; padding: 12px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; border: 1px solid #333; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+        .matrix-btn.active { background: #fff; color: #000; border-color: #fff; transform: scale(1.05); }
+
+        /* TOGGLES */
+        .switch { position: relative; display: inline-block; width: 40px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider-switch { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .3s; border-radius: 24px; }
+        .slider-switch:before { position: absolute; content: ""; height: 20px; width: 20px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider-switch { background-color: #4ade80; }
+        input:checked + .slider-switch:before { transform: translateX(16px); }
+
+        /* TOPOLIGHT HUD */
+        #topo-light-indicator { position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 0 15px #fff; z-index: 10; pointer-events: none; transition: transform 0.1s; }
+
+        /* RETROGRID */
+        #grid-container { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; flex: 1; background: #000; padding: 2px; }
+        .grid-item { position: relative; background: #111; overflow: hidden; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        .grid-item canvas { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        .grid-item span { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.7); padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; pointer-events: none; }
+        
+        #grid-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:99999; background:#000; flex-direction:column; }
+        #grid-modal-touch-zone { position:relative; flex:1; width:100%; overflow:hidden; touch-action:none; }
+
+        /* AR VIEW */
+        #camera-stream, #gl-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        #gl-canvas { z-index: 1; pointer-events: none; }
+        .ar-top-bar { position: absolute; top: 0; left: 0; width: 100%; padding: env(safe-area-inset-top, 20px) 20px; display: flex; justify-content: space-between; z-index: 10; pointer-events: none; }
+        .ar-top-bar button { pointer-events: auto; }
+        .status-badge { background: rgba(0,0,0,0.5); color: #4ade80; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; border: 1px solid rgba(74,222,128,0.3); backdrop-filter: blur(5px); height: 32px; display: flex; align-items: center;}
+        .ar-bottom-bar { position: absolute; bottom: 0; left: 0; width: 100%; padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px); display: flex; flex-direction: column; align-items: center; gap: 15px; z-index: 10; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); }
+        #shutter-btn { width: 70px; height: 70px; border-radius: 35px; background: rgba(255,255,255,0.9); border: 4px solid rgba(0,0,0,0.3); outline: 3px solid white; cursor: pointer; margin-top: 10px;}
+        #shutter-btn:active { transform: scale(0.95); }
+    </style>
+</head>
+<body>
+    
+    <div id="state-home" class="app-state active-state">
+        <div class="home-content">
+            <h1 class="app-title">Forensics Suite</h1>
+            <p class="app-subtitle">Mobile Archaeological Analysis</p>
+            
+            <div class="module-cards">
+                <label class="module-card">
+                    <input type="file" accept="image/png, image/jpeg" style="display:none" onchange="App.handleUpload(event, 'dp')">
+                    <div class="mod-icon" style="background: #FF2A5F;">🎨</div>
+                    <div class="mod-text"><h3>Decorrelation (DP)</h3><p>Chemical pigment separation</p></div>
+                </label>
+
+                <label class="module-card">
+                    <input type="file" accept="image/png, image/jpeg" style="display:none" onchange="App.handleUpload(event, 'topo')">
+                    <div class="mod-icon" style="background: #4ade80;">🔦</div>
+                    <div class="mod-text"><h3>TopoLight (RTI)</h3><p>Interactive 3D surface shadows</p></div>
+                </label>
+
+                <label class="module-card">
+                    <input type="file" accept="image/png, image/jpeg" style="display:none" onchange="App.handleUpload(event, 'grid')">
+                    <div class="mod-icon" style="background: #3b82f6;">🎛️</div>
+                    <div class="mod-text"><h3>RetroGrid</h3><p>9-Channel auto-contrast</p></div>
+                </label>
+
+                <div class="module-card" onclick="App.openAR()" style="border: 1px solid #333; background: transparent;">
+                    <div class="mod-icon" style="background: #fff; color: #000;">📷</div>
+                    <div class="mod-text"><h3>Live DP Viewfinder</h3><p>Real-time AR pigment scanner</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="state-editor" class="app-state">
+        <div class="editor-top-bar">
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <button class="icon-btn" onclick="App.closeToHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                <button id="btn-undo" class="icon-btn disabled" onclick="App.undoDP()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg></button>
+                <button class="text-btn" style="font-size: 13px; color: #ff4a4a;" onclick="App.resetDP()">Revert</button>
+            </div>
+            <button class="text-btn bold" onclick="App.saveDP()">Save</button>
+        </div>
+
+        <div class="canvas-container checkerboard-bg" id="dp-touch-zone">
+            <canvas id="static-canvas"></canvas>
+            <canvas id="ui-canvas"></canvas>
+            <div id="scanner-line"></div>
+            <div id="color-loupe"><div class="loupe-crosshair"></div></div>
+            <button id="btn-compare" class="floating-compare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="App.zoomMod(1.3)">+</button>
+                <button class="zoom-btn" onclick="App.zoomMod(0.769)">-</button>
+            </div>
+        </div>
+
+        <div class="editor-bottom-bar">
+            <div class="tool-row">
+                <div class="tool-group">
+                    <button class="icon-btn active" id="tool-global" onclick="App.setTool('global')">🌍</button>
+                    <button class="icon-btn" id="tool-area" onclick="App.setTool('area')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2" stroke-dasharray="3 3"></rect></svg></button>
+                    <button class="icon-btn" id="tool-wand" onclick="App.setTool('wand')">🪄</button>
+                </div>
+                <div id="wand-settings" class="slider-container" style="display: none; padding:0; border:none; width: 120px;">
+                    <span style="font-size: 10px; color:#888; text-transform: uppercase;">Tolerance</span>
+                    <input type="range" id="tolerance-slider" min="5" max="150" value="40" oninput="App.updateTolerance(this.value)">
+                </div>
+            </div>
+            
+            <div style="display:flex; width:100%; border-bottom: 1px solid #111;">
+                <div class="slider-container" style="flex:1; border:none;">
+                    <div class="carousel-header"><span>Stretch Intensity</span></div>
+                    <input type="range" id="intensity-slider" min="0" max="100" value="50" oninput="App.updateIntensity(this.value)">
+                </div>
+                <div class="slider-container" style="flex:1; border:none; border-left: 1px solid #222;">
+                    <div class="carousel-header"><span style="color:#3b82f6;">Graffiti Depth (ICA)</span></div>
+                    <input type="range" id="ica-slider" min="0" max="95" value="0" oninput="App.updateICA(this.value)">
+                </div>
+            </div>
+
+            <div class="carousel-header"><span id="active-colorspace-label">RAW (Native Image)</span></div>
+            <div id="matrix-carousel">
+                <button class="matrix-btn raw-btn active" id="mat-RAW" onclick="App.setMatrix('RAW')">RAW</button>
+                <button class="matrix-btn" id="mat-YRE" onclick="App.setMatrix('YRE')">YRE</button>
+                <button class="matrix-btn" id="mat-CRGB" onclick="App.setMatrix('CRGB')">CRGB</button>
+                <button class="matrix-btn" id="mat-YBK" onclick="App.setMatrix('YBK')">YBK</button>
+                <button class="matrix-btn" id="mat-LDS" onclick="App.setMatrix('LDS')">LDS</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="state-topolight" class="app-state">
+        <div class="editor-top-bar">
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <button class="icon-btn" onclick="App.closeToHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                <span style="font-size: 14px; font-weight: 600; color: #4ade80;">TopoLight Engine</span>
+            </div>
+            <button class="text-btn bold" onclick="App.saveTopo()">Save</button>
+        </div>
+        <div class="canvas-container" id="topo-touch-zone" style="background: #000; touch-action: none;">
+            <canvas id="topo-canvas"></canvas>
+            <div id="topo-light-indicator"></div>
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="App.zoomMod(1.3)">+</button>
+                <button class="zoom-btn" onclick="App.zoomMod(0.769)">-</button>
+            </div>
+        </div>
+        
+        <div class="editor-bottom-bar" style="padding: 15px 20px;">
+            <div class="slider-container" style="padding: 0 0 15px 0; border: none;">
+                <div class="carousel-header" style="margin-bottom: 5px;"><span style="font-size: 10px;">Exposure Boost</span></div>
+                <input type="range" min="5" max="40" value="15" oninput="App.updateTopoEx(this.value)">
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <span style="font-size: 14px; font-weight: 600;">Overlay YRE Pigment</span>
+                <label class="switch">
+                    <input type="checkbox" onchange="App.toggleTopoYRE(this.checked)">
+                    <span class="slider-switch round"></span>
+                </label>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 14px; font-weight: 600; color: #00ffff;">Incision X-Ray (Phase Edge)</span>
+                <label class="switch">
+                    <input type="checkbox" onchange="App.toggleTopoXRay(this.checked)">
+                    <span class="slider-switch round" style="background-color: #333;"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div id="state-retrogrid" class="app-state">
+        <div class="editor-top-bar">
+            <button class="icon-btn" onclick="App.closeToHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            <span style="font-size: 14px; font-weight: 600; color: #3b82f6;">RetroGrid Engine</span>
+            <div style="width: 44px;"></div>
+        </div>
+        <div id="grid-container">
+            <div class="grid-item" onclick="App.openGridModal('r', 'Red')"><canvas id="grid-r"></canvas><span>Red</span></div>
+            <div class="grid-item" onclick="App.openGridModal('g', 'Green')"><canvas id="grid-g"></canvas><span>Green</span></div>
+            <div class="grid-item" onclick="App.openGridModal('b', 'Blue')"><canvas id="grid-b"></canvas><span>Blue</span></div>
+            <div class="grid-item" onclick="App.openGridModal('h', 'Hue')"><canvas id="grid-h"></canvas><span>Hue</span></div>
+            <div class="grid-item" onclick="App.openGridModal('s', 'Saturation')"><canvas id="grid-s"></canvas><span>Saturation</span></div>
+            <div class="grid-item" onclick="App.openGridModal('v', 'Value')"><canvas id="grid-v"></canvas><span>Value</span></div>
+            <div class="grid-item" onclick="App.openGridModal('l', 'Lightness')"><canvas id="grid-l"></canvas><span>Lightness</span></div>
+            <div class="grid-item" onclick="App.openGridModal('a', 'A-Channel')"><canvas id="grid-a"></canvas><span>A-Channel</span></div>
+            <div class="grid-item" onclick="App.openGridModal('b2', 'B-Channel')"><canvas id="grid-b2"></canvas><span>B-Channel</span></div>
+        </div>
+    </div>
+
+    <div id="grid-modal">
+        <div class="editor-top-bar" style="background: rgba(0,0,0,0.8); border: none;">
+            <button class="icon-btn" onclick="App.closeGridModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            <span id="grid-modal-label" style="font-size: 14px; font-weight: 600; color: #fff;"></span>
+            <button class="text-btn bold" onclick="App.saveGrid()">Save</button>
+        </div>
+        <div id="grid-modal-touch-zone" class="canvas-container checkerboard-bg">
+            <canvas id="grid-modal-canvas"></canvas>
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="App.zoomMod(1.3)">+</button>
+                <button class="zoom-btn" onclick="App.zoomMod(0.769)">-</button>
+            </div>
+        </div>
+        <div class="editor-bottom-bar" style="padding: 15px 20px;">
+            <div class="carousel-header" style="margin-bottom: 5px;"><span>Exposure Adjust</span></div>
+            <input type="range" id="grid-exposure-slider" min="10" max="50" value="10" oninput="App.updateGridExposure(this.value)">
+        </div>
+    </div>
+
+    <div id="state-ar" class="app-state">
+        <video id="camera-stream" autoplay playsinline muted></video>
+        <canvas id="gl-canvas"></canvas>
+        <div class="ar-top-bar">
+            <button class="icon-btn" onclick="App.closeAR()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            <div class="status-badge">Live Sensor</div>
+        </div>
+        <div class="ar-bottom-bar">
+            <div class="slider-container" style="width: 100%; padding: 0 30px;">
+                <div class="carousel-header" style="margin-bottom: 5px;"><span style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase;">Stretch Intensity</span></div>
+                <input type="range" min="0" max="100" value="50" oninput="App.updateIntensity(this.value, true)">
+            </div>
+            <div id="ar-matrix-carousel" style="display: flex; overflow-x: auto; gap: 10px; width: 100%; padding: 0 20px; scrollbar-width: none;">
+                <button class="matrix-btn raw-btn active" id="ar-mat-RAW" onclick="App.setARMatrix('RAW')">RAW</button>
+                <button class="matrix-btn" id="ar-mat-YRE" onclick="App.setARMatrix('YRE')">YRE</button>
+                <button class="matrix-btn" id="ar-mat-CRGB" onclick="App.setARMatrix('CRGB')">CRGB</button>
+                <button class="matrix-btn" id="ar-mat-YBK" onclick="App.setARMatrix('YBK')">YBK</button>
+                <button class="matrix-btn" id="ar-mat-LDS" onclick="App.setARMatrix('LDS')">LDS</button>
+            </div>
+            <button id="shutter-btn" onclick="App.captureAR()"></button>
+            <p class="ar-hint">Tap shutter to freeze frame and auto-nuke grain.</p>
+        </div>
+    </div>
+
+    <script>
+        const CameraEngine = {
+            videoEl: null, stream: null, isReady: false,
+            init() {
+                this.videoEl = document.getElementById('camera-stream');
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } })
+                    .then(s => { this.stream = s; this.videoEl.srcObject = s; this.videoEl.play(); this.isReady = true; })
+                    .catch(err => alert("Camera access denied."));
+                } else { alert("Camera not supported."); }
+            },
+            stop() { if(this.stream) this.stream.getTracks().forEach(t=>t.stop()); this.isReady = false; },
+            getVideoElement() { return this.videoEl; }
+        };
+
+        const GLEngine = {
+            gl: null, program: null, tex: null, isActive: false,
+            currentMatrix: [1,0,0, 0,1,0, 0,0,1], currentChannelMeans: [0,0,0], currentTargetMeans: [0.5,0.5,0.5], colorSpace: 0,
+            init(canvas) {
+                this.gl = canvas.getContext('webgl'); if(!this.gl) return false;
+                const vsSource = `attribute vec2 a_position; attribute vec2 a_texCoord; varying vec2 v_texCoord; void main() { gl_Position = vec4(a_position, 0.0, 1.0); v_texCoord = vec2(a_texCoord.x, 1.0 - a_texCoord.y); }`;
+                const fsSource = `
+                    precision mediump float; varying vec2 v_texCoord; uniform sampler2D u_image; uniform mat3 u_matrix; uniform vec3 u_means; uniform vec3 u_targetMeans; uniform int u_colorSpace;
+                    vec3 rgb2yuv(vec3 rgb) { float y = 0.299*rgb.r + 0.587*rgb.g + 0.114*rgb.b; float u = -0.147*rgb.r - 0.288*rgb.g + 0.436*rgb.b; float v = 0.615*rgb.r - 0.514*rgb.g - 0.100*rgb.b; return vec3(y, u, v); }
+                    vec3 yuv2rgb(vec3 yuv) { float r = yuv.x + 1.139*yuv.z; float g = yuv.x - 0.394*yuv.y - 0.580*yuv.z; float b = yuv.x + 2.032*yuv.y; return vec3(r, g, b); }
+                    vec3 rgb2lab(vec3 rgb) { float l = 0.21*rgb.r + 0.71*rgb.g + 0.07*rgb.b; return vec3(l, rgb.r - l, rgb.b - l); }
+                    vec3 lab2rgb(vec3 lab) { return vec3(lab.x + lab.y, lab.x, lab.x + lab.z); }
+                    void main() {
+                        vec4 color = texture2D(u_image, v_texCoord); vec3 pt = color.rgb;
+                        if (u_colorSpace == 1) { pt = rgb2yuv(pt); } else if (u_colorSpace == 2) { pt = rgb2lab(pt); }
+                        vec3 c0 = pt - u_means; vec3 res = (u_matrix * c0) + u_targetMeans;
+                        if (u_colorSpace == 1) { res = yuv2rgb(res); } else if (u_colorSpace == 2) { res = lab2rgb(res); }
+                        gl_FragColor = vec4(clamp(res, 0.0, 1.0), color.a);
+                    }
+                `;
+                const compile = (type, source) => { const s = this.gl.createShader(type); this.gl.shaderSource(s, source); this.gl.compileShader(s); return s; };
+                const vs = compile(this.gl.VERTEX_SHADER, vsSource); const fs = compile(this.gl.FRAGMENT_SHADER, fsSource);
+                this.program = this.gl.createProgram(); this.gl.attachShader(this.program, vs); this.gl.attachShader(this.program, fs); this.gl.linkProgram(this.program); this.gl.useProgram(this.program);
+                const verts = new Float32Array([-1,-1, 1,-1, -1,1, 1,1]); const posBuf = this.gl.createBuffer(); this.gl.bindBuffer(this.gl.ARRAY_BUFFER, posBuf); this.gl.bufferData(this.gl.ARRAY_BUFFER, verts, this.gl.STATIC_DRAW);
+                const posLoc = this.gl.getAttribLocation(this.program, "a_position"); this.gl.enableVertexAttribArray(posLoc); this.gl.vertexAttribPointer(posLoc, 2, this.gl.FLOAT, false, 0, 0);
+                const texCoords = new Float32Array([0,0, 1,0, 0,1, 1,1]); const tBuf = this.gl.createBuffer(); this.gl.bindBuffer(this.gl.ARRAY_BUFFER, tBuf); this.gl.bufferData(this.gl.ARRAY_BUFFER, texCoords, this.gl.STATIC_DRAW);
+                const tLoc = this.gl.getAttribLocation(this.program, "a_texCoord"); this.gl.enableVertexAttribArray(tLoc); this.gl.vertexAttribPointer(tLoc, 2, this.gl.FLOAT, false, 0, 0);
+                this.tex = this.gl.createTexture(); this.gl.bindTexture(this.gl.TEXTURE_2D, this.tex); this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE); this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE); this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+                this.isActive = true; return true;
+            },
+            render(videoElement) {
+                if(!this.gl || !this.isActive) return;
+                this.gl.bindTexture(this.gl.TEXTURE_2D, this.tex); 
+                this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, videoElement);
+                const m = this.currentMatrix; const glMatrix = new Float32Array([m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]]);
+                this.gl.uniformMatrix3fv(this.gl.getUniformLocation(this.program, "u_matrix"), false, glMatrix); this.gl.uniform3fv(this.gl.getUniformLocation(this.program, "u_means"), this.currentChannelMeans); this.gl.uniform3fv(this.gl.getUniformLocation(this.program, "u_targetMeans"), this.currentTargetMeans); this.gl.uniform1i(this.gl.getUniformLocation(this.program, "u_colorSpace"), this.currentColorSpace);
+                this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+            }
+        };
+
+        const App = {
+            image: null, module: null,
+            mat: 'RAW', intensity: 0.5, tol: 40, tool: 'global',
+            tx: { s: 1, px: 0, py: 0 }, touchState: { isDragging: false, startX: 0, startY: 0, initialDist: 0, initialScale: 1 },
+            box: { a: false, d: false, ix: 0, iy: 0, iw: 0, ih: 0, sx: 0, sy: 0 },
+            cache: { valid: false, T: null, means: [0,0,0], space: 'RGB' },
+            hist: [], wandCol: null, isCmp: false,
+            
+            // TEXTURE NUKE (FFT)
+            hasNuked: false, 
+            
+            // STRATIGRAPHY ENGINE (ICA)
+            icaDepth: 0.0,
+
+            // TOPOLIGHT & X-RAY
+            topoNormals: null, topoL: {x: -0.5, y: -0.5, z: 0.707}, topoYRE: null, topoRaw: null, topoW: 0, topoH: 0, useYRE: false, topoExposure: 1.5, isLightDragging: false, topoXRay: false,
+            
+            gridDict: {}, activeGridChannel: null, gridExposure: 1.0,
+            arActive: false, arVideoCanvas: null, arCtx: null,
+
+            init() {
+                this.bindPointer('dp-touch-zone', () => this.renderDP(), false);
+                this.bindPointer('topo-touch-zone', () => this.renderTopo(), true);
+                this.bindPointer('grid-modal-touch-zone', () => this.renderGridModal(), false);
+
+                const cmp = document.getElementById('btn-compare');
+                cmp.addEventListener('pointerdown', ()=> { this.isCmp = true; this.renderDP(); });
+                cmp.addEventListener('pointerup', ()=> { this.isCmp = false; this.renderDP(); });
+                cmp.addEventListener('pointerleave', ()=> { this.isCmp = false; this.renderDP(); });
+
+                window.addEventListener('resize', () => { 
+                    if(this.module === 'dp') { this.resizeUICanvas(); this.renderDP(); }
+                    if(this.module === 'topo') { this.renderTopo(); }
+                    if(this.module === 'grid' && this.activeGridChannel) { this.renderGridModal(); }
+                });
+            },
+
+            bindPointer(id, renderFn, isTopo=false) {
+                const el = document.getElementById(id);
+                
+                el.addEventListener('mousedown', (e) => {
+                    if(!this.image) return; const r = el.getBoundingClientRect();
+                    if(isTopo) { this.isLightDragging = true; this.updateLightPos(e.clientX, e.clientY, r); return; }
+                    if(id === 'dp-touch-zone') {
+                        const pR = window.devicePixelRatio || 1; const px = (e.clientX - r.left)*pR, py = (e.clientY - r.top)*pR;
+                        if(this.tool === 'wand') { document.getElementById('color-loupe').style.display='block'; document.getElementById('color-loupe').style.left=px/pR+'px'; document.getElementById('color-loupe').style.top=(py/pR-80)+'px'; return; }
+                        if(this.tool === 'area') { this.box.a = true; this.box.d = false; this.box.sx = px; this.box.sy = py; const n = this.mapPx(px, py); this.box.ix = n.x; this.box.iy = n.y; return; }
+                    }
+                    this.touchState.isDragging = true; this.touchState.startX = e.clientX - this.tx.px; this.touchState.startY = e.clientY - this.tx.py;
+                });
+
+                el.addEventListener('mousemove', (e) => {
+                    if(!this.image) return; const r = el.getBoundingClientRect();
+                    if(isTopo && this.isLightDragging) { this.updateLightPos(e.clientX, e.clientY, r); return; }
+                    if(id === 'dp-touch-zone') {
+                        const pR = window.devicePixelRatio || 1; const px = (e.clientX - r.left)*pR, py = (e.clientY - r.top)*pR;
+                        if(this.tool === 'wand' && e.buttons > 0) { document.getElementById('color-loupe').style.left=px/pR+'px'; document.getElementById('color-loupe').style.top=(py/pR-80)+'px'; return; }
+                        if(this.tool === 'area' && this.box.a) { this.box.cx = px; this.box.cy = py; this.drawBox(); return; }
+                    }
+                    if(this.touchState.isDragging && !isTopo) { this.tx.px = e.clientX - this.touchState.startX; this.tx.py = e.clientY - this.touchState.startY; renderFn(); }
+                });
+
+                el.addEventListener('mouseup', (e) => {
+                    if(!this.image) return; this.isLightDragging = false; this.touchState.isDragging = false; 
+                    const r = el.getBoundingClientRect(); const pR = window.devicePixelRatio || 1; const px = (e.clientX - r.left)*pR, py = (e.clientY - r.top)*pR;
+                    if(id === 'dp-touch-zone') {
+                        if(this.tool === 'area' && this.box.a) {
+                            this.box.a = false; const n = this.mapPx(px, py); this.box.iw = n.x - this.box.ix; this.box.ih = n.y - this.box.iy;
+                            if(this.box.iw<0){this.box.ix+=this.box.iw; this.box.iw=Math.abs(this.box.iw);} if(this.box.ih<0){this.box.iy+=this.box.ih; this.box.ih=Math.abs(this.box.ih);}
+                            if(this.box.iw>10 && this.box.ih>10) { this.box.d=true; setTimeout(()=>this.clearUICanvas(), 600); if(this.mat==='RAW') this.setMatrix('YRE'); else { this.buildDP(); this.applyDP(); } } else this.clearUICanvas();
+                        }
+                        if(this.tool === 'wand') { document.getElementById('color-loupe').style.display='none'; if(this.mat==='RAW') this.setMatrix('YRE'); this.execWand(px, py); }
+                    }
+                });
+
+                el.addEventListener('mouseleave', () => { this.isLightDragging = false; this.touchState.isDragging = false; });
+
+                el.addEventListener('touchstart', (e) => {
+                    if(!this.image) return; const r = el.getBoundingClientRect();
+                    if(e.touches.length === 1) {
+                        if(isTopo) { this.isLightDragging = true; this.updateLightPos(e.touches[0].clientX, e.touches[0].clientY, r); return; }
+                        if(id === 'dp-touch-zone') {
+                            const pR = window.devicePixelRatio || 1; const px = (e.touches[0].clientX - r.left)*pR, py = (e.touches[0].clientY - r.top)*pR;
+                            if(this.tool === 'wand') { document.getElementById('color-loupe').style.display='block'; document.getElementById('color-loupe').style.left=px/pR+'px'; document.getElementById('color-loupe').style.top=(py/pR-80)+'px'; return; }
+                            if(this.tool === 'area') { this.box.a = true; this.box.d = false; this.box.sx = px; this.box.sy = py; const n = this.mapPx(px, py); this.box.ix = n.x; this.box.iy = n.y; return; }
+                        }
+                        this.touchState.isDragging = true; this.touchState.startX = e.touches[0].clientX - this.tx.px; this.touchState.startY = e.touches[0].clientY - this.tx.py;
+                    } else if (e.touches.length === 2) {
+                        this.isLightDragging = false; this.touchState.isDragging = false;
+                        const dx = e.touches[0].clientX - e.touches[1].clientX, dy = e.touches[0].clientY - e.touches[1].clientY;
+                        this.touchState.initialDist = Math.sqrt(dx*dx + dy*dy); this.touchState.initialScale = this.tx.s;
+                        this.touchState.startX = (e.touches[0].clientX + e.touches[1].clientX)/2 - this.tx.px;
+                        this.touchState.startY = (e.touches[0].clientY + e.touches[1].clientY)/2 - this.tx.py;
+                    }
+                }, {passive:false});
+
+                el.addEventListener('touchmove', (e) => {
+                    if(!this.image) return; e.preventDefault(); const r = el.getBoundingClientRect();
+                    if(e.touches.length === 1) {
+                        if(isTopo && this.isLightDragging) { this.updateLightPos(e.touches[0].clientX, e.touches[0].clientY, r); return; }
+                        if(id === 'dp-touch-zone') {
+                            const pR = window.devicePixelRatio || 1; const px = (e.touches[0].clientX - r.left)*pR, py = (e.touches[0].clientY - r.top)*pR;
+                            if(this.tool === 'wand') { document.getElementById('color-loupe').style.left=px/pR+'px'; document.getElementById('color-loupe').style.top=(py/pR-80)+'px'; return; }
+                            if(this.tool === 'area' && this.box.a) { this.box.cx = px; this.box.cy = py; this.drawBox(); return; }
+                        }
+                        if(this.touchState.isDragging && !isTopo) { this.tx.px = e.touches[0].clientX - this.touchState.startX; this.tx.py = e.touches[0].clientY - this.touchState.startY; renderFn(); }
+                    } else if (e.touches.length === 2) {
+                        const dx = e.touches[0].clientX - e.touches[1].clientX, dy = e.touches[0].clientY - e.touches[1].clientY;
+                        const dist = Math.sqrt(dx*dx + dy*dy); this.tx.s = Math.max(0.5, Math.min(this.touchState.initialScale * (dist/this.touchState.initialDist), 10));
+                        this.tx.px = (e.touches[0].clientX + e.touches[1].clientX)/2 - this.touchState.startX;
+                        this.tx.py = (e.touches[0].clientY + e.touches[1].clientY)/2 - this.touchState.startY;
+                        renderFn();
+                    }
+                }, {passive:false});
+
+                el.addEventListener('touchend', (e) => {
+                    if(!this.image) return; this.isLightDragging = false; this.touchState.isDragging = false; 
+                    if(e.changedTouches.length === 0) return; const pR = window.devicePixelRatio || 1; const r = el.getBoundingClientRect(); 
+                    const px = (e.changedTouches[0].clientX - r.left)*pR, py = (e.changedTouches[0].clientY - r.top)*pR;
+
+                    if(id === 'dp-touch-zone') {
+                        if(this.tool === 'area' && this.box.a) {
+                            this.box.a = false; const n = this.mapPx(px, py); this.box.iw = n.x - this.box.ix; this.box.ih = n.y - this.box.iy;
+                            if(this.box.iw<0){this.box.ix+=this.box.iw; this.box.iw=Math.abs(this.box.iw);} if(this.box.ih<0){this.box.iy+=this.box.ih; this.box.ih=Math.abs(this.box.ih);}
+                            if(this.box.iw>10 && this.box.ih>10) { this.box.d=true; setTimeout(()=>this.clearUICanvas(), 600); if(this.mat==='RAW') this.setMatrix('YRE'); else { this.buildDP(); this.applyDP(); } } else this.clearUICanvas();
+                        }
+                        if(this.tool === 'wand') { document.getElementById('color-loupe').style.display='none'; if(this.mat==='RAW') this.setMatrix('YRE'); this.execWand(px, py); }
+                    }
+                });
+            },
+
+            updateLightPos(cx, cy, r) {
+                let lx = ((cx - r.left) / r.width) * 2 - 1; let ly = ((cy - r.top) / r.height) * 2 - 1;
+                document.getElementById('topo-light-indicator').style.transform = `translate(${lx*50}px, ${ly*50}px)`;
+                let len = Math.sqrt(lx*lx + ly*ly + 0.25); if(len > 0) { this.topoL = { x: lx/len, y: ly/len, z: 0.5/len }; this.renderTopo(); }
+            },
+
+            switch(id) { document.querySelectorAll('.app-state').forEach(el => el.classList.remove('active-state')); document.getElementById(id).classList.add('active-state'); },
+            closeToHome() { this.image = null; this.module = null; this.switch('state-home'); },
+            
+            handleUpload(e, mod) {
+                const file = e.target.files[0]; if(!file) return;
+                this.module = mod; const r = new FileReader();
+                r.onload = (ev) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.image = img; this.tx = { s: 1, px: 0, py: 0 }; 
+                        if(mod === 'dp') { this.resetDP(); this.switch('state-editor'); setTimeout(() => { this.resizeUICanvas(); this.renderDP(); }, 150); }
+                        if(mod === 'topo') { this.switch('state-topolight'); setTimeout(() => this.initTopo(), 150); }
+                        if(mod === 'grid') { this.switch('state-retrogrid'); setTimeout(() => this.initGrid(), 150); }
+                    }; img.src = ev.target.result;
+                }; r.readAsDataURL(file); e.target.value = '';
+            },
+
+            zoomMod(factor) { this.tx.s = Math.max(0.5, Math.min(this.tx.s * factor, 10)); if(this.module==='dp') this.renderDP(); else if(this.module==='topo') this.renderTopo(); else if(this.module==='grid') this.renderGridModal(); },
+
+            // --- DP ENGINE ---
+            resetDP() {
+                this.mat = 'RAW'; this.intensity = 0.5; this.tol = 40; this.tool = 'global'; this.hasNuked = false; this.icaDepth = 0.0;
+                this.tx = { s: 1, px: 0, py: 0 }; this.box = { a: false, d: false, ix: 0, iy: 0, iw: 0, ih: 0, sx: 0, sy: 0 };
+                this.cache = { valid: false, T: null, means: [0,0,0], space: 'RGB' }; this.hist = []; this.wandCol = null;
+                document.getElementById('intensity-slider').value = 50; document.getElementById('tolerance-slider').value = 40; document.getElementById('ica-slider').value = 0;
+                this.setTool('global'); this.setMatrix('RAW'); this.updateUndo();
+            },
+            setTool(t) {
+                this.tool = t; ['global', 'area', 'wand'].forEach(id => document.getElementById('tool-'+id).classList.remove('active'));
+                document.getElementById('tool-'+t).classList.add('active'); document.getElementById('wand-settings').style.display = (t==='wand') ? 'block' : 'none';
+                if(t !== 'area') { this.box.d = false; } this.resizeUICanvas(); this.renderDP();
+                if(this.mat !== 'RAW' && t !== 'wand' && t !== 'area') { this.buildDP(); this.applyDP(); }
+            },
+            
+            // FFT TEXTURE NUKE PROXY: Hardware Accelerated Low-Pass Filtering
+            runTextureNuke() {
+                const scanner = document.getElementById('scanner-line');
+                scanner.classList.add('scanning');
+                
+                // Fast spatial blur to eliminate rock grain before processing
+                const c = document.createElement('canvas'); c.width = this.image.width; c.height = this.image.height; const ctx = c.getContext('2d');
+                ctx.filter = 'blur(1.5px)'; ctx.drawImage(this.image, 0, 0); ctx.filter = 'none';
+                
+                const newImg = new Image();
+                newImg.onload = () => {
+                    this.image = newImg;
+                    setTimeout(() => { 
+                        scanner.classList.remove('scanning'); 
+                        this.hasNuked = true;
+                        this.buildDP(); this.applyDP(); 
+                    }, 1200); // Sync with scanner CSS animation
+                };
+                newImg.src = c.toDataURL();
+            },
+
+            setMatrix(m) {
+                this.mat = m; ['RAW','YRE','CRGB','YBK','LDS'].forEach(id => document.getElementById('mat-'+id).classList.remove('active'));
+                document.getElementById('mat-'+m).classList.add('active'); document.getElementById('active-colorspace-label').innerText = m;
+                if(m === 'RAW') { this.cache.T = null; this.renderDP(); } 
+                else {
+                    if(!this.hasNuked) { this.runTextureNuke(); return; } // AUTO-PREP INTERCEPT
+                    if (this.tool !== 'wand' || this.cache.valid) { this.buildDP(); this.applyDP(); }
+                }
+            },
+            updateTolerance(v) { this.tol = parseInt(v); if(this.tool==='wand' && this.cache.valid) this.applyDP(); },
+            updateIntensity(v, isAR=false) { this.intensity = parseInt(v)/100; if(this.mat!=='RAW') this.applyDP(isAR); },
+            updateICA(v) { this.icaDepth = parseInt(v)/100; if(this.mat!=='RAW') this.applyDP(false); }, // 0 to 0.95
+            
+            saveDP() {
+                const eC = document.createElement('canvas'); const ctx = eC.getContext('2d'); eC.width = this.image.width; eC.height = this.image.height; ctx.drawImage(this.image, 0,0);
+                if (this.mat !== 'RAW' && this.cache.valid) { const iD = ctx.getImageData(0,0,eC.width,eC.height); this.processPixels(iD, this.cache.T, this.cache.means, this.cache.space); ctx.putImageData(iD,0,0); }
+                const link = document.createElement('a'); link.download = `DP_${this.mat}.png`; link.href = eC.toDataURL('image/png'); link.click();
+            },
+            
+            convert(r,g,b, sp) { if(sp==='RGB') return [r,g,b]; if(sp==='YUV') return [0.299*r+0.587*g+0.114*b, -0.147*r-0.288*g+0.436*b, 0.615*r-0.514*g-0.1*b]; if(sp==='LAB') { let y=0.21*r+0.71*g+0.07*b; return [y, r-y, b-y]; } },
+            invert(c0,c1,c2, sp) { if(sp==='RGB') return [c0,c1,c2]; if(sp==='YUV') return [c0+1.139*c2, c0-0.394*c1-0.580*c2, c0+2.032*c1]; if(sp==='LAB') return [c0+c1, c0, c0+c2]; },
+            eigen(A) {
+                let V=[[1,0,0],[0,1,0],[0,0,1]];
+                for(let it=0;it<50;it++){
+                    let max=0, p=0, q=1; for(let i=0;i<3;i++) for(let j=i+1;j<3;j++) if(Math.abs(A[i][j])>max) {max=Math.abs(A[i][j]); p=i; q=j;}
+                    if(max<0.000001) break; let th=(A[q][q]-A[p][p])/(2.0*A[p][q]); let t=1.0/(Math.abs(th)+Math.sqrt(th*th+1.0)); if(th<0) t=-t;
+                    let c=1.0/Math.sqrt(t*t+1.0); let s=c*t; let App=A[p][p], Aqq=A[q][q], Apq=A[p][q]; A[p][p]=App-t*Apq; A[q][q]=Aqq+t*Apq; A[p][q]=A[q][p]=0.0;
+                    for(let i=0;i<3;i++){ if(i!==p && i!==q){ let Aip=A[i][p], Aiq=A[i][q]; A[i][p]=A[p][i]=c*Aip-s*Aiq; A[i][q]=A[q][i]=s*Aip+c*Aiq; } let Vip=V[i][p], Viq=V[i][q]; V[i][p]=c*Vip-s*Viq; V[i][q]=s*Vip+c*Viq; }
+                } return { V:V, D:[A[0][0],A[1][1],A[2][2]] };
+            },
+            mult(A,B) { let r=[[0,0,0],[0,0,0],[0,0,0]]; for(let i=0;i<3;i++) for(let j=0;j<3;j++) r[i][j]=A[i][0]*B[0][j]+A[i][1]*B[1][j]+A[i][2]*B[2][j]; return r; },
+            trans(A) { return [[A[0][0],A[1][0],A[2][0]], [A[0][1],A[1][1],A[2][1]], [A[0][2],A[1][2],A[2][2]]]; },
+
+            calcMath(dataArr, w, h, sp) {
+                let means = [0,0,0]; let n = w*h; let cData = new Float32Array(n*3);
+                for (let i=0; i<n; i++) { let pt = this.convert(dataArr[i*4]/255, dataArr[i*4+1]/255, dataArr[i*4+2]/255, sp); cData[i*3]=pt[0]; cData[i*3+1]=pt[1]; cData[i*3+2]=pt[2]; means[0]+=pt[0]; means[1]+=pt[1]; means[2]+=pt[2]; }
+                means[0]/=n; means[1]/=n; means[2]/=n; let cov = [[0,0,0],[0,0,0],[0,0,0]];
+                for (let i=0; i<n; i++) { let c0=cData[i*3]-means[0], c1=cData[i*3+1]-means[1], c2=cData[i*3+2]-means[2]; cov[0][0]+=c0*c0; cov[0][1]+=c0*c1; cov[0][2]+=c0*c2; cov[1][1]+=c1*c1; cov[1][2]+=c1*c2; cov[2][2]+=c2*c2; }
+                cov[0][0]/=n; cov[0][1]/=n; cov[0][2]/=n; cov[1][1]/=n; cov[1][2]/=n; cov[2][2]/=n; cov[1][0]=cov[0][1]; cov[2][0]=cov[0][2]; cov[2][1]=cov[1][2];
+                let { V, D } = this.eigen(cov); this.cache = { valid: true, type: this.mat, means: means, V: V, D: D, space: sp };
+            },
+
+            buildDP(isAR=false) {
+                let img = this.image; if(!img) return; const c = document.createElement('canvas'); c.width = 256; c.height = 256; const ctx = c.getContext('2d');
+                if (this.tool === 'area' && this.box.d && !isAR) {
+                    let sx = Math.max(0, this.box.ix), sy = Math.max(0, this.box.iy), sw = Math.min(this.box.iw, img.width-sx), sh = Math.min(this.box.ih, img.height-sy);
+                    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 256, 256);
+                } else { ctx.drawImage(img, 0, 0, 256, 256); }
+                let sp = (this.mat==='LDS')?'LAB': (this.mat==='RGB'||this.mat==='CRGB')?'RGB':'YUV';
+                this.calcMath(ctx.getImageData(0,0,256,256).data, 256, 256, sp);
+                if(!isAR) { this.hist.push(JSON.parse(JSON.stringify(this.cache))); if(this.hist.length>10) this.hist.shift(); this.updateUndo(); }
+            },
+
+            applyDP(isAR=false) {
+                if(!this.cache.valid) return;
+                let { V, D, means, space } = this.cache; let std = 0.05 + (this.intensity * 0.2);
+                
+                // STRATIGRAPHY ENGINE (ICA): Mathematically flattens the principal eigenvalue (D[0])
+                let icaDampening = 1.0 - this.icaDepth;
+                
+                let Dinv = [
+                    [(std/Math.sqrt(Math.max(D[0],0.0001))) * icaDampening, 0, 0], 
+                    [0, std/Math.sqrt(Math.max(D[1],0.0001)), 0], 
+                    [0, 0, std/Math.sqrt(Math.max(D[2],0.0001))]
+                ];
+                let T = this.mult(this.mult(V, Dinv), this.trans(V)); this.cache.T = T;
+                if(isAR) {
+                    if(GLEngine.gl) { 
+                        GLEngine.currentMatrix = [T[0][0], T[3][0], T[6][0], T[1][0], T[4][0], T[7][0], T[2][0], T[5][0], T[8][0]]; 
+                        GLEngine.currentChannelMeans = means; 
+                        GLEngine.currentTargetMeans = [0.5, (space==='RGB')?0.5:0, (space==='RGB')?0.5:0]; 
+                        GLEngine.currentColorSpace = (space==='LAB')?2:(space==='YUV')?1:0; 
+                        GLEngine.isActive = true; 
+                    } return;
+                }
+                this.renderDP();
+            },
+
+            processPixels(iD, T, means, sp) {
+                const data = iD.data; const w = iD.width; const pxl = w * iD.height;
+                const isWand = this.tool === 'wand' && this.wandCol; const target = this.wandCol; const tol = this.tol;
+                const isArea = this.tool === 'area' && this.box.d; let bL=0, bR=0, bT=0, bB=0;
+                if(isArea) {
+                    let scX = w/this.image.width, scY = iD.height/this.image.height;
+                    bL = Math.floor(this.box.ix*scX); bT = Math.floor(this.box.iy*scY); bR = bL + Math.floor(this.box.iw*scX); bB = bT + Math.floor(this.box.ih*scY);
+                }
+                let tm1 = (sp==='RGB')?0.5:0; let tm2 = (sp==='RGB')?0.5:0;
+                for(let i=0; i<pxl; i++) {
+                    if(isArea) { let px = i%w, py=Math.floor(i/w); if(px<bL || px>bR || py<bT || py>bB) continue; }
+                    let r=data[i*4], g=data[i*4+1], b=data[i*4+2];
+                    if(isWand && Math.sqrt((r-target.r)**2+(g-target.g)**2+(b-target.b)**2)>tol) { data[i*4+3]=0; continue; }
+                    let pt = this.convert(r/255, g/255, b/255, sp); let c0=pt[0]-means[0], c1=pt[1]-means[1], c2=pt[2]-means[2];
+                    let rgb = this.invert(T[0][0]*c0+T[0][1]*c1+T[0][2]*c2+0.5, T[1][0]*c0+T[1][1]*c1+T[1][2]*c2+tm1, T[2][0]*c0+T[2][1]*c1+T[2][2]*c2+tm2, sp);
+                    data[i*4]=Math.max(0,Math.min(255,rgb[0]*255)); data[i*4+1]=Math.max(0,Math.min(255,rgb[1]*255)); data[i*4+2]=Math.max(0,Math.min(255,rgb[2]*255));
+                }
+            },
+
+            renderDP() {
+                if(!this.image) return; const c = document.getElementById('static-canvas'); const ctx = c.getContext('2d', {willReadFrequently:true});
+                let rect = c.parentElement.getBoundingClientRect(); if(rect.width===0) rect={width:window.innerWidth, height:window.innerHeight};
+                const pR = window.devicePixelRatio || 1; c.width = Math.floor(rect.width*pR); c.height = Math.floor(rect.height*pR);
+                ctx.clearRect(0,0,c.width,c.height); ctx.save(); ctx.translate(c.width/2 + this.tx.px, c.height/2 + this.tx.py); ctx.scale(this.tx.s, this.tx.s);
+                let ir=this.image.width/this.image.height, sr=c.width/c.height, dw, dh;
+                if(ir>sr) { dw=c.width; dh=c.width/ir; } else { dh=c.height; dw=c.height*ir; } dw = Math.floor(dw); dh = Math.floor(dh); ctx.translate(-dw/2, -dh/2);
+                if(this.cache.T && !this.isCmp) {
+                    const pc = document.createElement('canvas'); pc.width=dw; pc.height=dh; const pctx = pc.getContext('2d'); pctx.drawImage(this.image, 0,0,dw,dh);
+                    const iD = pctx.getImageData(0,0,dw,dh); this.processPixels(iD, this.cache.T, this.cache.means, this.cache.space); pctx.putImageData(iD,0,0); ctx.drawImage(pc,0,0);
+                } else { ctx.drawImage(this.image,0,0,dw,dh); } ctx.restore();
+            },
+
+            resizeUICanvas() { const c=document.getElementById('ui-canvas'); const pR=window.devicePixelRatio||1; const r=c.parentElement.getBoundingClientRect(); c.width=r.width*pR; c.height=r.height*pR; if(this.tool==='area'&&this.box.d) this.drawBox(); },
+            clearUICanvas() { const c=document.getElementById('ui-canvas'); c.getContext('2d').clearRect(0,0,c.width,c.height); },
+            updateUndo() { const b = document.getElementById('btn-undo'); if(this.hist.length>0) b.classList.remove('disabled'); else b.classList.add('disabled'); },
+            undoDP() { if(this.hist.length>0) { this.cache = this.hist.pop(); this.mat = this.cache.type; document.querySelectorAll('#matrix-carousel .matrix-btn').forEach(b=>b.classList.remove('active')); document.getElementById('mat-'+this.mat).classList.add('active'); this.updateUndo(); this.applyDP(); } },
+
+            mapPx(sx, sy) {
+                const c = document.getElementById('static-canvas'); let ir=this.image.width/this.image.height, sr=c.width/c.height, dw, dh;
+                if(ir>sr) { dw=c.width; dh=c.width/ir; } else { dh=c.height; dw=c.height*ir; }
+                let ix = (sx - (c.width/2 + this.tx.px))/this.tx.s + dw/2, iy = (sy - (c.height/2 + this.tx.py))/this.tx.s + dh/2;
+                return { x: (ix/dw)*this.image.width, y: (iy/dh)*this.image.height };
+            },
+            drawBox() {
+                const c=document.getElementById('ui-canvas'); const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); if(!this.box.a && !this.box.d) return;
+                ctx.strokeStyle='#FF2A5F'; ctx.lineWidth=3; ctx.setLineDash([8,8]); let w = this.box.cx - this.box.sx, h = this.box.cy - this.box.sy;
+                ctx.strokeRect(this.box.sx, this.box.sy, w, h); ctx.fillStyle='rgba(255,42,95,0.1)'; ctx.fillRect(this.box.sx, this.box.sy, w, h);
+            },
+            execWand(px, py) {
+                const c=document.getElementById('static-canvas'); const ctx=c.getContext('2d'); const d=ctx.getImageData(0,0,c.width,c.height).data;
+                const idx = (Math.floor(py)*c.width + Math.floor(px))*4; if(idx<0 || idx>=d.length) return;
+                this.wandCol = {r:d[idx], g:d[idx+1], b:d[idx+2]};
+                const tc=document.createElement('canvas'); tc.width=256; tc.height=256; const tcx=tc.getContext('2d'); tcx.drawImage(this.image,0,0,256,256);
+                const sd=tcx.getImageData(0,0,256,256).data; let iso=[];
+                for(let i=0; i<sd.length/4; i++) { if(Math.sqrt((sd[i*4]-this.wandCol.r)**2+(sd[i*4+1]-this.wandCol.g)**2+(sd[i*4+2]-this.wandCol.b)**2)<this.tol) iso.push({r:sd[i*4], g:sd[i*4+1], b:sd[i*4+2]}); }
+                if(iso.length>4) { this.calcMath(new Uint8Array(iso.map(p=>[p.r,p.g,p.b,255]).flat()), iso.length, 1, (this.mat==='LDS')?'LAB':(this.mat==='RAW')?'RGB':(this.mat==='CRGB')?'RGB':'YUV'); this.hist.push(JSON.parse(JSON.stringify(this.cache))); this.updateUndo(); this.applyDP(); }
+            },
+
+            // --- MODULE 2: TOPOLIGHT ---
+            initTopo() {
+                let w = this.image.width, h = this.image.height; const max = 1024;
+                if(w>max || h>max){ let r=w/h; if(r>1){w=max; h=max/r;} else {h=max; w=max*r;} } w=Math.floor(w); h=Math.floor(h);
+                const tc=document.createElement('canvas'); tc.width=w; tc.height=h; const ctx=tc.getContext('2d', {willReadFrequently:true}); ctx.drawImage(this.image,0,0,w,h);
+                const d=ctx.getImageData(0,0,w,h).data; this.topoNormals = new Float32Array(w*h*3);
+                const gy=(x,y)=>{ if(x<0)x=0; if(x>=w)x=w-1; if(y<0)y=0; if(y>=h)y=h-1; let i=(y*w+x)*4; return (d[i]+d[i+1]+d[i+2])/3.0; };
+                for(let y=0;y<h;y++){ for(let x=0;x<w;x++){
+                    let dx = -1*gy(x-1,y-1)+1*gy(x+1,y-1)-2*gy(x-1,y)+2*gy(x+1,y)-1*gy(x-1,y+1)+1*gy(x+1,y+1);
+                    let dy = -1*gy(x-1,y-1)-2*gy(x,y-1)-1*gy(x+1,y-1)+1*gy(x-1,y+1)+2*gy(x,y+1)+1*gy(x+1,y+1);
+                    dx*=0.5; dy*=0.5; let dz=255.0; let len=Math.sqrt(dx*dx+dy*dy+dz*dz); let i=(y*w+x)*3; this.topoNormals[i]=dx/len; this.topoNormals[i+1]=dy/len; this.topoNormals[i+2]=dz/len;
+                }}
+                this.buildDP(); if(this.cache.valid) {
+                    let {V,D,means,space}=this.cache; let Dinv=[[0.15/Math.sqrt(Math.max(D[0],0.0001)),0,0],[0,0.15/Math.sqrt(Math.max(D[1],0.0001)),0],[0,0,0.15/Math.sqrt(Math.max(D[2],0.0001))]];
+                    let T=this.mult(this.mult(V,Dinv),this.trans(V)); this.topoYRE = new Uint8ClampedArray(d.length); this.topoYRE.set(d);
+                    this.processPixels({data:this.topoYRE, width:w, height:h}, T, means, space);
+                }
+                this.topoL = {x:-0.5, y:-0.5, z:0.707}; this.topoExposure = 1.5; document.getElementById('topo-light-indicator').style.transform = `translate(-25px,-25px)`;
+                document.getElementById('topo-yre-toggle').checked = false; this.topoUseYRE = false; this.topoXRay = false; this.topoW = w; this.topoH = h; this.topoRaw = d; this.renderTopo();
+            },
+            renderTopo() {
+                if(!this.topoNormals) return; const c=document.getElementById('topo-canvas'); const pR=window.devicePixelRatio||1;
+                let rect=c.parentElement.getBoundingClientRect(); if(rect.width===0) rect={width:window.innerWidth, height:window.innerHeight}; c.width=Math.floor(rect.width*pR); c.height=Math.floor(rect.height*pR);
+                const tc=document.createElement('canvas'); tc.width=this.topoW; tc.height=this.topoH; const ctx=tc.getContext('2d'); const iD=ctx.createImageData(this.topoW, this.topoH); const d=iD.data;
+                const bd = (this.useYRE && this.topoYRE) ? this.topoYRE : this.topoRaw;
+                for(let i=0, n=0; i<d.length; i+=4, n+=3) {
+                    let nx = this.topoNormals[n], ny = this.topoNormals[n+1], nz = this.topoNormals[n+2];
+                    
+                    // INCISION X-RAY (PHASE CONGRUENCY PROXY)
+                    let edgeMag = Math.sqrt(nx*nx + ny*ny);
+                    if (this.topoXRay && edgeMag > 0.3) {
+                        d[i] = 0; d[i+1] = Math.min(255, edgeMag * 800); d[i+2] = 0; d[i+3] = 255;
+                    } else {
+                        let int = Math.pow(Math.max(0, nx*this.topoL.x + ny*this.topoL.y + nz*this.topoL.z), 1.5);
+                        d[i]=Math.min(255, bd[i]*int*this.topoExposure); d[i+1]=Math.min(255, bd[i+1]*int*this.topoExposure); d[i+2]=Math.min(255, bd[i+2]*int*this.topoExposure); d[i+3]=255;
+                    }
+                }
+                ctx.putImageData(iD,0,0); const dCtx=c.getContext('2d'); dCtx.clearRect(0,0,c.width,c.height); dCtx.save(); dCtx.translate(c.width/2 + this.tx.px, c.height/2 + this.tx.py); dCtx.scale(this.tx.s, this.tx.s);
+                let ir=this.topoW/this.topoH, sr=c.width/c.height, dw, dh; if(ir>sr) {dw=c.width; dh=c.width/ir;} else {dh=c.height; dw=c.height*ir;} 
+                dCtx.translate(-dw/2, -dh/2); dCtx.drawImage(tc, 0, 0, dw, dh); dCtx.restore();
+            },
+            toggleTopoYRE(v) { this.useYRE = v; this.renderTopo(); },
+            toggleTopoXRay(v) { this.topoXRay = v; this.renderTopo(); },
+            updateTopoEx(v) { this.topoExposure = parseInt(v) / 10.0; this.renderTopo(); },
+            saveTopo() { const a=document.createElement('a'); a.download=`Topo_${Date.now()}.png`; a.href=document.getElementById('topo-canvas').toDataURL('image/png'); a.click(); },
+
+            // --- MODULE 3: RETROGRID ---
+            initGrid() {
+                let w=this.image.width, h=this.image.height; const max=500; if(w>max||h>max){ let r=w/h; if(r>1){w=max;h=max/r;}else{h=max;w=max*r;} } w=Math.floor(w); h=Math.floor(h);
+                const tc=document.createElement('canvas'); tc.width=w; tc.height=h; const ctx=tc.getContext('2d', {willReadFrequently:true}); ctx.drawImage(this.image,0,0,w,h);
+                const d=ctx.getImageData(0,0,w,h).data; const chs=['r','g','b','h','s','v','l','a','b2']; const dict={}; chs.forEach(c=>dict[c]=new Uint8ClampedArray(w*h*4));
+                for(let i=0; i<d.length; i+=4) {
+                    let R=d[i], G=d[i+1], B=d[i+2]; dict.r[i]=R; dict.g[i]=G; dict.b[i]=B; dict.r[i+1]=R; dict.g[i+1]=G; dict.b[i+1]=B; dict.r[i+2]=R; dict.g[i+2]=G; dict.b[i+2]=B;
+                    let rN=R/255, gN=G/255, bN=B/255, cx=Math.max(rN,gN,bN), cm=Math.min(rN,gN,bN), df=cx-cm, hv=0;
+                    if(cx!==cm) { if(cx===rN) hv=(60*((gN-bN)/df)+360)%360; else if(cx===gN) hv=(60*((bN-rN)/df)+120)%360; else hv=(60*((rN-gN)/df)+240)%360; }
+                    let H=Math.floor((hv/360)*255), S=Math.floor((cx===0?0:df/cx)*255), V=Math.floor(cx*255);
+                    dict.h[i]=H; dict.s[i]=S; dict.v[i]=V; dict.h[i+1]=H; dict.s[i+1]=S; dict.v[i+1]=V; dict.h[i+2]=H; dict.s[i+2]=S; dict.v[i+2]=V;
+                    let L=0.21*R+0.71*G+0.07*B, A=R-L+128, B2=B-L+128;
+                    dict.l[i]=L; dict.a[i]=A; dict.b2[i]=B2; dict.l[i+1]=L; dict.a[i+1]=A; dict.b2[i+1]=B2; dict.l[i+2]=L; dict.a[i+2]=A; dict.b2[i+2]=B2;
+                    chs.forEach(c=>dict[c][i+3]=255);
+                }
+                this.gridDict = {}; this.gridW = w; this.gridH = h;
+                chs.forEach(c=>{
+                    let min=255, max=0, a=dict[c]; for(let i=0;i<a.length;i+=4){ if(a[i]<min)min=a[i]; if(a[i]>max)max=a[i]; }
+                    if(max>min){ let r=max-min; for(let i=0;i<a.length;i+=4){let v=((a[i]-min)/r)*255; a[i]=v; a[i+1]=v; a[i+2]=v;} }
+                    this.gridDict[c] = a; const cnv=document.getElementById('grid-'+c); cnv.width=w; cnv.height=h; const cx=cnv.getContext('2d'); const iD=cx.createImageData(w,h); iD.data.set(a); cx.putImageData(iD,0,0);
+                });
+            },
+            openGridModal(ch, name) {
+                this.activeGridChannel = ch; document.getElementById('grid-modal-label').innerText = name; document.getElementById('grid-modal').style.display = 'flex';
+                this.tx = { s: 1, px: 0, py: 0 }; this.gridExposure = 1.0; document.getElementById('grid-exposure-slider').value = 10;
+                setTimeout(() => { this.renderGridModal(); }, 50); 
+            },
+            closeGridModal() { document.getElementById('grid-modal').style.display = 'none'; this.activeGridChannel = null; },
+            updateGridExposure(v) { this.gridExposure = parseInt(v) / 10.0; this.renderGridModal(); },
+            renderGridModal() {
+                if(!this.activeGridChannel) return; const c = document.getElementById('grid-modal-canvas'); const pR = window.devicePixelRatio || 1;
+                let rect = c.parentElement.getBoundingClientRect(); if(rect.width===0) rect={width:window.innerWidth, height:window.innerHeight}; c.width = Math.floor(rect.width * pR); c.height = Math.floor(rect.height * pR);
+                const tc = document.createElement('canvas'); tc.width = this.gridW; tc.height = this.gridH; const ctx = tc.getContext('2d');
+                const iD = ctx.createImageData(this.gridW, this.gridH); const baseData = this.gridDict[this.activeGridChannel];
+                for(let i=0; i<baseData.length; i+=4) { iD.data[i] = Math.min(255, baseData[i]*this.gridExposure); iD.data[i+1] = Math.min(255, baseData[i+1]*this.gridExposure); iD.data[i+2] = Math.min(255, baseData[i+2]*this.gridExposure); iD.data[i+3] = 255; }
+                ctx.putImageData(iD,0,0); const dCtx = c.getContext('2d'); dCtx.clearRect(0,0,c.width,c.height); dCtx.save();
+                dCtx.translate(c.width/2 + this.tx.px, c.height/2 + this.tx.py); dCtx.scale(this.tx.s, this.tx.s);
+                let ir=this.gridW/this.gridH, sr=c.width/c.height, dw, dh; if(ir>sr) { dw=c.width; dh=c.width/ir; } else { dh=c.height; dw=c.height*ir; }
+                dCtx.translate(-dw/2, -dh/2); dCtx.drawImage(tc, 0, 0, dw, dh); dCtx.restore();
+            },
+            saveGrid() {
+                const a=document.createElement('a'); a.download=`RetroGrid_${this.activeGridChannel}_${Date.now()}.png`; a.href=document.getElementById('grid-modal-canvas').toDataURL('image/png'); a.click();
+            },
+
+            // --- AR LIVE ---
+            openAR() {
+                this.activeModule = 'dp'; this.switch('state-ar'); this.setARMatrix('RAW'); CameraEngine.init(); this.arActive=true; setTimeout(() => { this.loopAR(); }, 500); 
+            },
+            closeAR() { this.arActive=false; CameraEngine.stop(); this.activeModule=null; this.switch('state-home'); },
+            setARMatrix(m) {
+                document.querySelectorAll('.ar-matrix-btn').forEach(b=>b.classList.remove('active')); document.getElementById('ar-mat-'+m).classList.add('active'); this.mat = m;
+                if(m!=='RAW') {
+                    const video = CameraEngine.getVideoElement(); if(video.videoWidth === 0) return;
+                    const c=document.createElement('canvas'); c.width=256; c.height=256; c.getContext('2d').drawImage(video,0,0,256,256);
+                    let sp = (m==='LDS')?'LAB':(m==='RGB'||m==='CRGB')?'RGB':'YUV'; this.calcMath(c.getContext('2d').getImageData(0,0,256,256).data, 256, 256, sp); 
+                    const canvas = document.getElementById('gl-canvas'); if(!GLEngine.gl) GLEngine.init(canvas); this.applyDP(true);
+                } else { GLEngine.isActive = false; }
+            },
+            loopAR() {
+                if(!this.arActive) return; const video = CameraEngine.getVideoElement();
+                if(video && video.readyState === video.HAVE_ENOUGH_DATA) {
+                    const c=document.getElementById('gl-canvas'); if(c.width!==video.videoWidth) {c.width=video.videoWidth; c.height=video.videoHeight;}
+                    if(this.mat!=='RAW' && GLEngine.gl && GLEngine.isActive && this.cache.valid) {
+                        if(!this.arVideoCanvas) { this.arVideoCanvas = document.createElement('canvas'); this.arCtx = this.arVideoCanvas.getContext('2d', {willReadFrequently: true}); }
+                        if(this.arVideoCanvas.width !== video.videoWidth) { this.arVideoCanvas.width = video.videoWidth; this.arVideoCanvas.height = video.videoHeight; }
+                        this.arCtx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight); GLEngine.render(this.arVideoCanvas);
+                    } else if(GLEngine.gl) { GLEngine.gl.clearColor(0,0,0,0); GLEngine.gl.clear(GLEngine.gl.COLOR_BUFFER_BIT); }
+                }
+                requestAnimationFrame(()=>this.loopAR());
+            },
+            captureAR() {
+                const video = CameraEngine.getVideoElement(); const w=video.videoWidth, h=video.videoHeight; if(w===0) return;
+                const r=video.getBoundingClientRect(), vR=w/h, cR=r.width/r.height; let dw=w, dh=h, sx=0, sy=0;
+                if(vR>cR) { dw=h*cR; sx=(w-dw)/2; } else { dh=w/cR; sy=(h-dh)/2; }
+                const c=document.createElement('canvas'); c.width=dw; c.height=dh; c.getContext('2d').drawImage(video, sx, sy, dw, dh, 0, 0, dw, dh);
+                this.image=c; this.arActive=false; CameraEngine.stop(); this.resetDP(); this.switch('state-editor'); 
+                setTimeout(()=> { this.resizeUICanvas(); this.renderDP(); this.runTextureNuke(); }, 150);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => { App.init(); });
+    </script>
+</body>
+</html>
