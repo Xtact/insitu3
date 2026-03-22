@@ -69,12 +69,16 @@
         .matrix-btn { background: #222; color: #888; padding: 12px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; border: 1px solid #333; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
         .matrix-btn.active { background: #fff; color: #000; border-color: #fff; transform: scale(1.05); }
 
+        /* TOGGLES */
         .switch { position: relative; display: inline-block; width: 40px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider-switch { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .3s; border-radius: 24px; }
         .slider-switch:before { position: absolute; content: ""; height: 20px; width: 20px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; }
         input:checked + .slider-switch { background-color: #4ade80; }
         input:checked + .slider-switch:before { transform: translateX(16px); }
+
+        /* TOPOLIGHT HUD */
+        #topo-light-indicator { position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 0 15px #fff; z-index: 10; pointer-events: none; display: none !important; }
 
         /* RETROGRID */
         #grid-container { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; gap: 2px; flex: 1; background: #000; padding: 2px; overflow-y: auto; }
@@ -115,7 +119,7 @@
                 <label class="module-card">
                     <input type="file" accept="image/png, image/jpeg" style="display:none" onchange="App.handleUpload(event, 'topo')">
                     <div class="mod-icon" style="background: #4ade80;">🔦</div>
-                    <div class="mod-text"><h3>TopoLight (DEBUG)</h3><p>Canvas load test</p></div>
+                    <div class="mod-text"><h3>TopoLight (TL)</h3><p>Testing Overlay & Exposure</p></div>
                 </label>
 
                 <label class="module-card">
@@ -193,15 +197,40 @@
         <div class="editor-top-bar">
             <div style="display: flex; gap: 15px; align-items: center;">
                 <button class="icon-btn" onclick="App.closeToHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-                <span style="font-size: 14px; font-weight: 600; color: #4ade80;">TopoLight (Debug Mode)</span>
+                <span style="font-size: 14px; font-weight: 600; color: #4ade80;">TopoLight Engine</span>
             </div>
-            <div style="width: 44px;"></div>
+            <button class="text-btn bold" onclick="App.saveTopo()">Save</button>
         </div>
         <div class="canvas-container" id="topo-touch-zone" style="background: #000; touch-action: none;">
             <canvas id="topo-canvas"></canvas>
+            <div id="topo-light-indicator"></div>
             <div class="zoom-controls">
                 <button class="zoom-btn" onclick="App.zoomMod(1.3)">+</button>
                 <button class="zoom-btn" onclick="App.zoomMod(0.769)">-</button>
+            </div>
+            <div style="position:absolute; bottom:20px; width:100%; text-align:center; pointer-events:none; font-size:12px; color:rgba(255,255,255,0.6);">
+                Light tracking temporarily disabled for testing.
+            </div>
+        </div>
+        
+        <div class="editor-bottom-bar" style="padding: 15px 20px;">
+            <div class="slider-container" style="padding: 0 0 15px 0; border: none;">
+                <div class="carousel-header" style="margin-bottom: 5px;"><span style="font-size: 10px;">Exposure Boost</span></div>
+                <input type="range" min="5" max="40" value="15" oninput="App.updateTopoEx(this.value)">
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <span style="font-size: 14px; font-weight: 600;">Overlay YRE Pigment</span>
+                <label class="switch">
+                    <input type="checkbox" id="topo-yre-toggle" onchange="App.toggleTopoYRE(this.checked)">
+                    <span class="slider-switch round"></span>
+                </label>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 14px; font-weight: 600; color: #00ffff;">Incision X-Ray (Phase Edge)</span>
+                <label class="switch">
+                    <input type="checkbox" id="topo-xray-toggle" onchange="App.toggleTopoXRay(this.checked)">
+                    <span class="slider-switch round" style="background-color: #333;"></span>
+                </label>
             </div>
         </div>
     </div>
@@ -301,11 +330,11 @@
                 <input type="range" min="0" max="100" value="50" oninput="App.updateIntensity(this.value, true)">
             </div>
             <div id="ar-matrix-carousel" style="display: flex; overflow-x: auto; gap: 10px; width: 100%; padding: 0 20px; scrollbar-width: none;">
-                <button class="matrix-btn raw-btn active" id="ar-mat-RAW" onclick="App.setARMatrix('RAW')">RAW</button>
-                <button class="matrix-btn" id="ar-mat-YRE" onclick="App.setARMatrix('YRE')">YRE</button>
-                <button class="matrix-btn" id="ar-mat-CRGB" onclick="App.setARMatrix('CRGB')">CRGB</button>
-                <button class="matrix-btn" id="ar-mat-YBK" onclick="App.setARMatrix('YBK')">YBK</button>
-                <button class="matrix-btn" id="ar-mat-LDS" onclick="App.setARMatrix('LDS')">LDS</button>
+                <button class="matrix-btn ar-matrix-btn raw-btn active" id="ar-mat-RAW" onclick="App.setARMatrix('RAW')">RAW</button>
+                <button class="matrix-btn ar-matrix-btn" id="ar-mat-YRE" onclick="App.setARMatrix('YRE')">YRE</button>
+                <button class="matrix-btn ar-matrix-btn" id="ar-mat-CRGB" onclick="App.setARMatrix('CRGB')">CRGB</button>
+                <button class="matrix-btn ar-matrix-btn" id="ar-mat-YBK" onclick="App.setARMatrix('YBK')">YBK</button>
+                <button class="matrix-btn ar-matrix-btn" id="ar-mat-LDS" onclick="App.setARMatrix('LDS')">LDS</button>
             </div>
             <button id="shutter-btn" onclick="App.captureAR()"></button>
             <p class="ar-hint">Tap shutter to freeze frame and auto-nuke grain.</p>
@@ -379,7 +408,8 @@
             cache: { valid: false, T: null, means: [0,0,0], space: 'RGB' },
             hist: [], wandCol: null, isCmp: false, hasNuked: false, icaDepth: 0.0,
             
-            topoW: 0, topoH: 0,
+            // TOPOLIGHT (Light Tracking Disabled per Instructions)
+            topoNormals: null, topoL: {x: 0, y: 0, z: 1}, topoYRE: null, topoRaw: null, topoW: 0, topoH: 0, useYRE: false, topoExposure: 1.5, topoXRay: false,
             
             rgPrepData: null, gridDict: {}, activeGridChannel: null, gridW: 0, gridH: 0,
             gridChs: [
@@ -393,7 +423,7 @@
 
             init() {
                 this.bindPointer('dp-touch-zone', () => this.renderDP(), false);
-                this.bindPointer('topo-touch-zone', () => this.renderTopo(), false); // TL logic stripped
+                this.bindPointer('topo-touch-zone', () => this.renderTopo(), true); 
                 this.bindPointer('grid-modal-touch-zone', () => this.renderGridModal(), false);
                 this.bindPointer('rg-prep-touch-zone', () => this.renderRGPrep(), false);
 
@@ -410,11 +440,11 @@
                 });
             },
 
-            // --- UNIVERSAL MOUSE/TOUCH ---
             bindPointer(id, renderFn, isTopo=false) {
                 const el = document.getElementById(id);
                 el.addEventListener('mousedown', (e) => {
                     if(!this.image) return; const r = el.getBoundingClientRect();
+                    // Light dragging removed for TopoLight
                     if(id === 'dp-touch-zone') {
                         const pR = window.devicePixelRatio || 1; const px = (e.clientX - r.left)*pR, py = (e.clientY - r.top)*pR;
                         if(this.tool === 'wand') { document.getElementById('color-loupe').style.display='block'; document.getElementById('color-loupe').style.left=px/pR+'px'; document.getElementById('color-loupe').style.top=(py/pR-80)+'px'; return; }
@@ -596,7 +626,6 @@
                 cov[0][0]/=n; cov[0][1]/=n; cov[0][2]/=n; cov[1][1]/=n; cov[1][2]/=n; cov[2][2]/=n; cov[1][0]=cov[0][1]; cov[2][0]=cov[0][2]; cov[2][1]=cov[1][2];
                 let { V, D } = this.eigen(cov); 
                 
-                // AR Washout Clamp
                 if (this.arActive) { D[0] = Math.max(D[0], 0.005); D[1] = Math.max(D[1], 0.005); D[2] = Math.max(D[2], 0.005); }
 
                 this.cache = { valid: true, type: this.mat, means: means, V: V, D: D, space: sp };
@@ -693,40 +722,75 @@
                 if(iso.length>4) { this.calcMath(new Uint8Array(iso.map(p=>[p.r,p.g,p.b,255]).flat()), iso.length, 1, (this.mat==='LDS')?'LAB':(this.mat==='RAW')?'RGB':(this.mat==='CRGB')?'RGB':'YUV'); this.hist.push(JSON.parse(JSON.stringify(this.cache))); this.updateUndo(); this.applyDP(); }
             },
 
-            // --- MODULE 2: TOPOLIGHT (DEBUG) ---
+            // --- MODULE 2: TOPOLIGHT ---
             initTopo() {
-                if(!this.image) return;
-                let w = this.image.width, h = this.image.height;
-                const max = 800;
-                if(w>max || h>max){ let r=w/h; if(r>1){w=max; h=max/r;} else {h=max; w=max*r;} }
-                this.topoW = Math.floor(w);
-                this.topoH = Math.floor(h);
+                if(!this.image || this.image.width === 0) return;
+                let w = this.image.width, h = this.image.height; const max = 800;
+                if(w>max || h>max){ let r=w/h; if(r>1){w=max; h=max/r;} else {h=max; w=max*r;} } w=Math.floor(w); h=Math.floor(h);
+                
+                const tc=document.createElement('canvas'); tc.width=w; tc.height=h; const ctx=tc.getContext('2d', {willReadFrequently:true}); ctx.drawImage(this.image,0,0,w,h);
+                
+                const sourceData = ctx.getImageData(0,0,w,h).data; 
+                this.topoRaw = new Uint8ClampedArray(sourceData);
+                this.topoNormals = new Float32Array(w*h*3);
+                
+                const gy=(x,y)=>{ if(x<0)x=0; if(x>=w)x=w-1; if(y<0)y=0; if(y>=h)y=h-1; let i=(y*w+x)*4; return (sourceData[i]+sourceData[i+1]+sourceData[i+2])/3.0; };
+                for(let y=0;y<h;y++){ for(let x=0;x<w;x++){
+                    let dx = -1*gy(x-1,y-1)+1*gy(x+1,y-1)-2*gy(x-1,y)+2*gy(x+1,y)-1*gy(x-1,y+1)+1*gy(x+1,y+1);
+                    let dy = -1*gy(x-1,y-1)-2*gy(x,y-1)-1*gy(x+1,y-1)+1*gy(x-1,y+1)+2*gy(x,y+1)+1*gy(x+1,y+1);
+                    dx*=0.5; dy*=0.5; let dz=255.0; let len=Math.sqrt(dx*dx+dy*dy+dz*dz); let i=(y*w+x)*3; this.topoNormals[i]=dx/len; this.topoNormals[i+1]=dy/len; this.topoNormals[i+2]=dz/len;
+                }}
+                
+                this.buildDP(); if(this.cache.valid) {
+                    let {V,D,means,space}=this.cache; let Dinv=[[0.15/Math.sqrt(Math.max(D[0],0.0001)),0,0],[0,0.15/Math.sqrt(Math.max(D[1],0.0001)),0],[0,0,0.15/Math.sqrt(Math.max(D[2],0.0001))]];
+                    let T=this.mult(this.mult(V,Dinv),this.trans(V)); 
+                    this.topoYRE = new Uint8ClampedArray(sourceData);
+                    this.processPixels({data:this.topoYRE, width:w, height:h}, T, means, space);
+                }
+                
+                // FIXED LIGHT (Neutral Z-Axis) per Instructions
+                this.topoL = {x:0, y:0, z:1}; 
+                this.topoExposure = 1.5; 
+                
+                document.getElementById('topo-yre-toggle').checked = false; 
+                document.getElementById('topo-xray-toggle').checked = false; 
+                this.topoUseYRE = false; 
+                this.topoXRay = false; 
+                this.topoW = w; 
+                this.topoH = h; 
                 this.renderTopo();
             },
             renderTopo() {
-                if(!this.image) return;
-                const c=document.getElementById('topo-canvas');
-                const pR=window.devicePixelRatio||1;
-                let rect=c.parentElement.getBoundingClientRect();
-                if(rect.width===0) rect={width:window.innerWidth, height:window.innerHeight};
-
-                c.width=Math.floor(rect.width*pR);
-                c.height=Math.floor(rect.height*pR);
-
-                const ctx=c.getContext('2d');
-                ctx.clearRect(0,0,c.width,c.height);
-
-                ctx.save();
-                ctx.translate(c.width/2 + this.tx.px, c.height/2 + this.tx.py);
-                ctx.scale(this.tx.s, this.tx.s);
-
-                let ir=this.topoW/this.topoH, sr=c.width/c.height, dw, dh;
-                if(ir>sr) {dw=c.width; dh=c.width/ir;} else {dh=c.height; dw=c.height*ir;}
-
-                ctx.translate(-dw/2, -dh/2);
-                ctx.drawImage(this.image, 0, 0, dw, dh);
-                ctx.restore();
+                if(!this.topoRaw || this.topoW === 0) return;
+                const c=document.getElementById('topo-canvas'); const pR=window.devicePixelRatio||1;
+                let rect=c.parentElement.getBoundingClientRect(); if(rect.width===0) rect={width:window.innerWidth, height:window.innerHeight}; c.width=Math.floor(rect.width*pR); c.height=Math.floor(rect.height*pR);
+                const dCtx=c.getContext('2d'); dCtx.clearRect(0,0,c.width,c.height);
+                
+                const tc=document.createElement('canvas'); tc.width=this.topoW; tc.height=this.topoH; const ctx=tc.getContext('2d'); const iD=ctx.createImageData(this.topoW, this.topoH); const d=iD.data;
+                const bd = (this.useYRE && this.topoYRE) ? this.topoYRE : this.topoRaw;
+                for(let i=0, n=0; i<d.length; i+=4, n+=3) {
+                    let nx = this.topoNormals[n], ny = this.topoNormals[n+1], nz = this.topoNormals[n+2];
+                    let edgeMag = Math.sqrt(nx*nx + ny*ny);
+                    if (this.topoXRay && edgeMag > 0.3) { 
+                        // High Contrast Grayscale Edge
+                        d[i] = Math.min(255, edgeMag * 800); 
+                        d[i+1] = Math.min(255, edgeMag * 800); 
+                        d[i+2] = Math.min(255, edgeMag * 800); 
+                        d[i+3] = 255; 
+                    } else {
+                        // Flat Shading multiplier based on Light Z-Axis
+                        let int = Math.pow(Math.max(0, nz), 1.5);
+                        d[i]=Math.min(255, bd[i]*int*this.topoExposure); d[i+1]=Math.min(255, bd[i+1]*int*this.topoExposure); d[i+2]=Math.min(255, bd[i+2]*int*this.topoExposure); d[i+3]=255;
+                    }
+                }
+                ctx.putImageData(iD,0,0); dCtx.save(); dCtx.translate(c.width/2 + this.tx.px, c.height/2 + this.tx.py); dCtx.scale(this.tx.s, this.tx.s);
+                let ir=this.topoW/this.topoH, sr=c.width/c.height, dw, dh; if(ir>sr) {dw=c.width; dh=c.width/ir;} else {dh=c.height; dw=c.height*ir;} 
+                dCtx.translate(-dw/2, -dh/2); dCtx.drawImage(tc, 0, 0, dw, dh); dCtx.restore();
             },
+            toggleTopoYRE(v) { this.useYRE = v; this.renderTopo(); },
+            toggleTopoXRay(v) { this.topoXRay = v; this.renderTopo(); },
+            updateTopoEx(v) { this.topoExposure = parseInt(v) / 10.0; this.renderTopo(); },
+            saveTopo() { const a=document.createElement('a'); a.download=`Topo_${Date.now()}.png`; a.href=document.getElementById('topo-canvas').toDataURL('image/png'); a.click(); },
 
             // --- MODULE 3: RETROGRID ---
             renderRGPrep() {
@@ -787,7 +851,7 @@
                 if(ch==='h') { let h=v/255*6, x=255*(1-Math.abs(h%2-1)); if(h<1)return[255,x,0]; if(h<2)return[x,255,0]; if(h<3)return[0,255,x]; if(h<4)return[0,x,255]; if(h<5)return[x,0,255]; return[255,0,x]; }
                 if(ch==='a') return [v, 255-v, 0]; 
                 if(ch==='b2') return [255-v, v, v]; 
-                if(ch==='edge') return [v, v, v]; // Pure Grayscale for true X-Ray definition
+                if(ch==='edge') return [v, v, v]; 
                 return [v,v,v]; 
             },
             initGrid() {
@@ -813,7 +877,7 @@
                     for (let x=0; x<w; x++) {
                         let dx = -1*gy(x-1,y-1)+1*gy(x+1,y-1)-2*gy(x-1,y)+2*gy(x+1,y)-1*gy(x-1,y+1)+1*gy(x+1,y+1);
                         let dy = -1*gy(x-1,y-1)-2*gy(x,y-1)-1*gy(x+1,y-1)+1*gy(x-1,y+1)+2*gy(x,y+1)+1*gy(x+1,y+1);
-                        dx = dx/4.0; dy = dy/4.0;
+                        dx = dx/4.0; dy = dy/4.0; 
                         this.gridDict.edge[y*w + x] = Math.min(255, Math.sqrt(dx*dx + dy*dy) * 1.5);
                     }
                 }
@@ -906,11 +970,7 @@
             },
             closeAR() { this.arActive=false; CameraEngine.stop(); this.activeModule=null; this.switch('state-home'); },
             setARMatrix(m) {
-                // FIXED: Explicitly un-select all AR buttons to fix stickiness
-                document.querySelectorAll('.ar-matrix-btn').forEach(b=>b.classList.remove('active')); 
-                document.getElementById('ar-mat-'+m).classList.add('active'); 
-                this.mat = m;
-                
+                document.querySelectorAll('.ar-matrix-btn').forEach(b=>b.classList.remove('active')); document.getElementById('ar-mat-'+m).classList.add('active'); this.mat = m;
                 if(m!=='RAW') {
                     const video = CameraEngine.getVideoElement(); if(!video || video.videoWidth === 0) return;
                     const c=document.createElement('canvas'); c.width=256; c.height=256; 
