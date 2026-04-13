@@ -108,26 +108,38 @@
             <h1 class="app-title">Forensics Suite</h1>
             <p class="app-subtitle">Mobile Archaeological Analysis</p>
             
+            <div id="workspace-status" style="display: none; background: #111; border: 1px solid #3b82f6; border-radius: 12px; padding: 15px; margin-bottom: 20px; align-items: center; justify-content: space-between; width: 100%; max-width: 350px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <canvas id="workspace-thumb" width="40" height="40" style="border-radius: 8px; object-fit: cover; background: #000;"></canvas>
+                    <div>
+                        <h4 style="font-size: 14px; color: #fff; font-weight: 600;">Image in Workspace</h4>
+                        <p style="font-size: 11px; color: #888;">Select a module below to edit</p>
+                    </div>
+                </div>
+                <button class="text-btn" style="color: #ff4a4a; font-size: 12px; font-weight: bold; padding: 5px;" onclick="App.clearWorkspace()">Clear</button>
+            </div>
+
             <div class="module-cards">
-                <label class="module-card">
-                    <input type="file" accept="image/png, image/jpeg" style="display:none" onchange="App.handleUpload(event, 'dp')">
+                <input type="file" id="file-upload-dp" accept="image/png, image/jpeg" style="display:none" onchange="App.handleUpload(event, 'dp')">
+                <input type="file" id="file-upload-topo" accept="image/png, image/jpeg" style="display:none" onchange="App.handleUpload(event, 'topo')">
+                <input type="file" id="file-upload-grid-prep" accept="image/png, image/jpeg" style="display:none" onchange="App.handleUpload(event, 'grid-prep')">
+
+                <div class="module-card" onclick="App.routeTo('dp')">
                     <div class="mod-icon" style="background: #FF2A5F;">🎨</div>
                     <div class="mod-text"><h3>Decorrelation (DP)</h3><p>Chemical pigment separation</p></div>
-                </label>
+                </div>
 
-                <label class="module-card">
-                    <input type="file" accept="image/png, image/jpeg" style="display:none" onchange="App.handleUpload(event, 'topo')">
+                <div class="module-card" onclick="App.routeTo('topo')">
                     <div class="mod-icon" style="background: #4ade80;">🔦</div>
                     <div class="mod-text"><h3>TopoLight (TL)</h3><p>Interactive 3D surface shadows</p></div>
-                </label>
+                </div>
 
-                <label class="module-card">
-                    <input type="file" accept="image/png, image/jpeg" style="display:none" onchange="App.handleUpload(event, 'grid-prep')">
+                <div class="module-card" onclick="App.routeTo('grid-prep')">
                     <div class="mod-icon" style="background: #3b82f6;">🎛️</div>
                     <div class="mod-text"><h3>RetroGrid 16</h3><p>Includes Structural X-Ray</p></div>
-                </label>
+                </div>
 
-                <div class="module-card" onclick="App.openAR()" style="border: 1px solid #333; background: transparent;">
+                <div class="module-card" onclick="App.routeTo('ar')" style="border: 1px solid #333; background: transparent;">
                     <div class="mod-icon" style="background: #fff; color: #000;">📷</div>
                     <div class="mod-text"><h3>Live DP Viewfinder</h3><p>Real-time AR pigment scanner</p></div>
                 </div>
@@ -138,7 +150,8 @@
     <div id="state-editor" class="app-state">
         <div class="editor-top-bar">
             <div style="display: flex; gap: 15px; align-items: center;">
-                <button class="icon-btn" onclick="App.closeToHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                <button class="icon-btn" onclick="App.closeToHome(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                <button class="icon-btn blue-btn" onclick="App.pushToWorkspace()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
                 <button id="btn-undo" class="icon-btn disabled" onclick="App.undoDP()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg></button>
                 <button class="text-btn" style="font-size: 13px; color: #ff4a4a;" onclick="App.resetDP()">Revert</button>
             </div>
@@ -195,7 +208,8 @@
     <div id="state-topolight" class="app-state">
         <div class="editor-top-bar">
             <div style="display: flex; gap: 15px; align-items: center;">
-                <button class="icon-btn" onclick="App.closeToHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                <button class="icon-btn" onclick="App.closeToHome(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                <button class="icon-btn blue-btn" onclick="App.pushToWorkspace()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
                 <span style="font-size: 14px; font-weight: 600; color: #4ade80;">TopoLight Engine</span>
             </div>
             <button class="text-btn bold" onclick="App.saveTopo()">Save</button>
@@ -236,8 +250,11 @@
 
     <div id="state-retrogrid-prep" class="app-state">
         <div class="editor-top-bar">
-            <button class="icon-btn" onclick="App.closeToHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-            <span style="font-size: 14px; font-weight: 600; color: #3b82f6;">Pre-Tune Image</span>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <button class="icon-btn" onclick="App.closeToHome(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                <button class="icon-btn blue-btn" onclick="App.pushToWorkspace()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+                <span style="font-size: 14px; font-weight: 600; color: #3b82f6;">Pre-Tune Image</span>
+            </div>
             <button class="primary-btn blue-btn" onclick="App.commitRGPrep()">Generate 16</button>
         </div>
         <div class="canvas-container checkerboard-bg" id="rg-prep-touch-zone">
@@ -269,7 +286,7 @@
 
     <div id="state-retrogrid" class="app-state">
         <div class="editor-top-bar">
-            <button class="icon-btn" onclick="App.closeToHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            <button class="icon-btn" onclick="App.closeToHome(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
             <span style="font-size: 14px; font-weight: 600; color: #3b82f6;">Select Channel</span>
             <div style="width: 44px;"></div>
         </div>
@@ -278,7 +295,10 @@
 
     <div id="grid-modal">
         <div class="editor-top-bar" style="background: rgba(0,0,0,0.8); border: none;">
-            <button class="icon-btn" onclick="App.closeGridModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <button class="icon-btn" onclick="App.closeGridModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                <button class="icon-btn blue-btn" onclick="App.pushToWorkspace()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+            </div>
             <span id="grid-modal-label" style="font-size: 14px; font-weight: 600; color: #fff;"></span>
             <button class="text-btn bold" onclick="App.saveGrid()">Save</button>
         </div>
@@ -533,7 +553,119 @@
             },
 
             switch(id) { document.querySelectorAll('.app-state').forEach(el => el.classList.remove('active-state')); document.getElementById(id).classList.add('active-state'); },
-            closeToHome() { this.image = null; this.module = null; this.switch('state-home'); },
+            
+            // --- NEW WORKSPACE & ROUTING LOGIC ---
+            closeToHome(discard = false) { 
+                if(discard) { this.image = null; }
+                this.module = null; 
+                this.switch('state-home'); 
+                this.updateHomeUI();
+            },
+
+            clearWorkspace() {
+                this.image = null;
+                this.updateHomeUI();
+            },
+
+            updateHomeUI() {
+                const banner = document.getElementById('workspace-status');
+                if (this.image) {
+                    banner.style.display = 'flex';
+                    const thumb = document.getElementById('workspace-thumb');
+                    const ctx = thumb.getContext('2d');
+                    ctx.clearRect(0, 0, 40, 40);
+                    
+                    // Draw a centered, scaled thumbnail
+                    let scale = Math.max(40 / this.image.width, 40 / this.image.height);
+                    let x = (40 / 2) - (this.image.width / 2) * scale;
+                    let y = (40 / 2) - (this.image.height / 2) * scale;
+                    ctx.drawImage(this.image, x, y, this.image.width * scale, this.image.height * scale);
+                } else {
+                    banner.style.display = 'none';
+                }
+            },
+
+            routeTo(mod) {
+                if (mod === 'ar') { this.openAR(); return; }
+                if (this.image) {
+                    this.module = mod; this.tx = { s: 1, px: 0, py: 0 }; 
+                    if(mod === 'dp') { this.resetDP(); this.switch('state-editor'); setTimeout(() => this.waitForDimensions(() => this.renderDP(), 'ui-canvas'), 100); }
+                    if(mod === 'topo') { this.switch('state-topolight'); setTimeout(() => this.waitForDimensions(() => this.initTopo(), 'topo-touch-zone'), 100); }
+                    if(mod === 'grid-prep') { 
+                        this.rgPrepData = { exp: 100, cont: 100, bp: 0, sharp: 0 };
+                        document.getElementById('rg-prep-exp').value = 100; document.getElementById('rg-prep-cont').value = 100;
+                        document.getElementById('rg-prep-bp').value = 0; document.getElementById('rg-prep-sharp').value = 0;
+                        this.switch('state-retrogrid-prep'); setTimeout(() => this.waitForDimensions(() => this.renderRGPrep(), 'rg-prep-touch-zone'), 100); 
+                    }
+                } else {
+                    document.getElementById('file-upload-' + mod).click();
+                }
+            },
+
+            pushToWorkspace() {
+                this.bakeCurrentView(() => {
+                    this.module = null;
+                    if(document.getElementById('grid-modal')) document.getElementById('grid-modal').style.display = 'none';
+                    this.switch('state-home');
+                    this.updateHomeUI();
+                });
+            },
+
+            bakeCurrentView(callback) {
+                let c, ctx;
+                
+                if (this.module === 'dp') {
+                    c = document.createElement('canvas'); c.width = this.image.width; c.height = this.image.height; ctx = c.getContext('2d');
+                    ctx.drawImage(this.image, 0, 0);
+                    if (this.mat !== 'RAW' && this.cache.valid) { 
+                        const iD = ctx.getImageData(0,0,c.width,c.height); 
+                        this.processPixels(iD, this.cache.T, this.cache.means, this.cache.space); 
+                        ctx.putImageData(iD,0,0); 
+                    }
+                } 
+                else if (this.module === 'topo') {
+                    c = document.createElement('canvas'); c.width = this.topoW; c.height = this.topoH; ctx = c.getContext('2d');
+                    const iD = ctx.createImageData(this.topoW, this.topoH); const d = iD.data;
+                    const bd = (this.useYRE && this.topoYRE) ? this.topoYRE : this.topoRaw;
+                    for(let i=0, n=0; i<d.length; i+=4, n+=3) {
+                        if (this.topoXRay) { 
+                            let v = this.topoEdge[i/4]; d[i]=v; d[i+1]=v; d[i+2]=v; d[i+3]=255; 
+                        } else {
+                            let int = Math.pow(Math.max(0, this.topoNormals[n]*this.topoL.x + this.topoNormals[n+1]*this.topoL.y + this.topoNormals[n+2]*this.topoL.z), 1.5);
+                            d[i]=Math.min(255, bd[i]*int*this.topoExposure); d[i+1]=Math.min(255, bd[i+1]*int*this.topoExposure); d[i+2]=Math.min(255, bd[i+2]*int*this.topoExposure); d[i+3]=255;
+                        }
+                    }
+                    ctx.putImageData(iD,0,0);
+                } 
+                else if (this.module === 'grid' && this.activeGridChannel) {
+                    c = document.createElement('canvas'); c.width = this.gridW; c.height = this.gridH; ctx = c.getContext('2d');
+                    const iD = ctx.createImageData(this.gridW, this.gridH); const baseData = this.gridDict[this.activeGridChannel];
+                    let exp = parseInt(document.getElementById('rg-exp').value) / 100.0;
+                    let cont = parseInt(document.getElementById('rg-cont').value) / 100.0;
+                    let bp = parseInt(document.getElementById('rg-bp').value);
+                    
+                    let adjusted = new Uint8ClampedArray(baseData.length);
+                    for(let i=0; i<baseData.length; i++) {
+                        let v = baseData[i]; if (v < bp) v = 0; v = v * exp; v = ((v/255 - 0.5) * cont + 0.5) * 255; adjusted[i] = Math.max(0, Math.min(255, v));
+                    }
+                    for(let i=0; i<adjusted.length; i++) { 
+                        let rgb = this.gridColorMap(adjusted[i], this.activeGridChannel);
+                        iD.data[i*4]=rgb[0]; iD.data[i*4+1]=rgb[1]; iD.data[i*4+2]=rgb[2]; iD.data[i*4+3]=255; 
+                    }
+                    ctx.putImageData(iD, 0, 0);
+                } 
+                else {
+                    if(callback) callback(); return;
+                }
+
+                // Render the finalized canvas into the global App.image object
+                const newImg = new Image();
+                newImg.onload = () => {
+                    this.image = newImg;
+                    if(callback) callback();
+                };
+                newImg.src = c.toDataURL();
+            },
             
             handleUpload(e, mod) {
                 const file = e.target.files[0]; if(!file) return;
