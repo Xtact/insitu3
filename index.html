@@ -760,12 +760,22 @@
                     const videoEl = document.getElementById('xray-video-source');
                     videoEl.src = videoURL;
                     
-                    videoEl.onloadeddata = () => {
+                    // FORCE THE BROWSER TO LOAD THE FILE
+                    videoEl.load(); 
+                    
+                    // Use onloadedmetadata instead of onloadeddata (fires instantly)
+                    videoEl.onloadedmetadata = () => {
                         if (videoEl.duration > 20) {
                             alert("Warning: Processing clips over 15 seconds may cause memory crashes on mobile browsers.");
                         }
                         this.openXRayVideo();
                     };
+                    
+                    // Fallback in case the metadata fails to load (catch errors)
+                    videoEl.onerror = () => {
+                        alert("Error loading video format. Please ensure it is an MP4, WEBM, or MOV.");
+                    };
+                    
                     e.target.value = '';
                     return;
                 }
@@ -1385,6 +1395,54 @@
                         this.xrayRecorder.stop();
                     }
                 };
+            },
+            
+            // --- UPDATED UPLOAD HANDLER (Handles Image & Video) ---
+            handleUpload(e, mod) {
+                const file = e.target.files[0]; if(!file) return;
+                
+                // Route for Video Processing
+                if (mod === 'xray-vid') {
+                    const videoURL = URL.createObjectURL(file);
+                    const videoEl = document.getElementById('xray-video-source');
+                    videoEl.src = videoURL;
+                    
+                    // FORCE THE BROWSER TO LOAD THE FILE
+                    videoEl.load(); 
+                    
+                    // Use onloadedmetadata instead of onloadeddata (fires instantly)
+                    videoEl.onloadedmetadata = () => {
+                        if (videoEl.duration > 20) {
+                            alert("Warning: Processing clips over 15 seconds may cause memory crashes on mobile browsers.");
+                        }
+                        this.openXRayVideo();
+                    };
+                    
+                    // Fallback in case the metadata fails to load (catch errors)
+                    videoEl.onerror = () => {
+                        alert("Error loading video format. Please ensure it is an MP4, WEBM, or MOV.");
+                    };
+                    
+                    e.target.value = '';
+                    return;
+                }
+
+                // Route for standard images
+                this.module = mod; const r = new FileReader();
+                r.onload = (ev) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.image = img; this.tx = { s: 1, px: 0, py: 0 }; 
+                        if(mod === 'dp') { this.resetDP(); this.switch('state-editor'); setTimeout(() => this.waitForDimensions(() => this.renderDP(), 'ui-canvas'), 100); }
+                        if(mod === 'topo') { this.switch('state-topolight'); setTimeout(() => this.waitForDimensions(() => this.initTopo(), 'topo-touch-zone'), 100); }
+                        if(mod === 'grid-prep') { 
+                            this.rgPrepData = { exp: 100, cont: 100, bp: 0, sharp: 0 };
+                            document.getElementById('rg-prep-exp').value = 100; document.getElementById('rg-prep-cont').value = 100;
+                            document.getElementById('rg-prep-bp').value = 0; document.getElementById('rg-prep-sharp').value = 0;
+                            this.switch('state-retrogrid-prep'); setTimeout(() => this.waitForDimensions(() => this.renderRGPrep(), 'rg-prep-touch-zone'), 100); 
+                        }
+                    }; img.src = ev.target.result;
+                }; r.readAsDataURL(file); e.target.value = '';
             }
         };
 
