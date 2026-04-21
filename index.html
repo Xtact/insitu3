@@ -378,13 +378,30 @@
             <div style="width: 44px;"></div>
         </div>
 
-        <div class="ar-bottom-bar" id="xray-controls" style="background: linear-gradient(to top, rgba(0,0,0,0.9) 70%, transparent); padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 10px);">
-            <div class="slider-container" style="width: 100%; padding: 0 30px;">
-                <div class="carousel-header" style="margin-bottom: 5px;"><span style="font-size: 11px; font-weight: 600; color: #00ffff; text-transform: uppercase;">Edge Sensitivity</span></div>
-                <input type="range" id="xray-vid-sens-slider" min="0" max="100" value="50" oninput="App.updateXRaySens(this.value)">
+        <div class="ar-bottom-bar" id="xray-controls" style="background: linear-gradient(to top, rgba(0,0,0,0.9) 80%, transparent); padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 10px); width: 100%;">
+            <div class="tune-deck" style="background: transparent; border: none; padding: 0 20px; width: 100%;">
+                <div class="slider-container" style="padding:0; border:none;">
+                    <div class="carousel-header"><span style="color: #00ffff;">Sensitivity</span></div>
+                    <input type="range" id="xray-vid-sens" min="0" max="100" value="50" oninput="App.updateXRaySettings()">
+                </div>
+                <div class="slider-container" style="padding:0; border:none;">
+                    <div class="carousel-header"><span style="color: #00ffff;">Pre-Contrast</span></div>
+                    <input type="range" id="xray-vid-cont" min="0" max="200" value="100" oninput="App.updateXRaySettings()">
+                </div>
+                <div class="slider-container" style="padding:0; border:none;">
+                    <div class="carousel-header"><span style="color: #00ffff;">Noise Gate</span></div>
+                    <input type="range" id="xray-vid-gate" min="0" max="100" value="0" oninput="App.updateXRaySettings()">
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 5px 0;">
+                    <span style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase;">Invert Matrix</span>
+                    <label class="switch" style="transform: scale(0.9); margin:0;">
+                        <input type="checkbox" id="xray-vid-inv" onchange="App.updateXRaySettings()">
+                        <span class="slider-switch round"></span>
+                    </label>
+                </div>
             </div>
             <button class="primary-btn" style="background: #00ffff; color: #000; width: calc(100% - 40px); margin: 15px 20px 5px;" onclick="App.processAndDownloadXRay()">Process & Export Video</button>
-            <p class="ar-hint" style="color: #888;">Render takes 1:1 time of video length.</p>
+            <p class="ar-hint" style="color: #888; margin-top: 5px;">Render takes 1:1 time of video length.</p>
         </div>
         
         <div id="xray-processing-overlay" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index: 100; flex-direction: column; justify-content: center; align-items: center;">
@@ -456,30 +473,47 @@
         };
 
         const XRayEngine = {
-            gl: null, program: null, tex: null, isActive: false, sensitivity: 1.5,
+            gl: null, program: null, tex: null, isActive: false, 
+            sensitivity: 1.5, contrast: 1.0, noiseGate: 0.0, invert: 0,
             init(canvas) {
                 this.gl = canvas.getContext('webgl', { preserveDrawingBuffer: true }); if(!this.gl) return false;
                 const vsSource = `attribute vec2 a_position; attribute vec2 a_texCoord; varying vec2 v_texCoord; void main() { gl_Position = vec4(a_position, 0.0, 1.0); v_texCoord = vec2(a_texCoord.x, 1.0 - a_texCoord.y); }`;
                 const fsSource = `
-                    precision mediump float; varying vec2 v_texCoord; uniform sampler2D u_image; uniform vec2 u_resolution; uniform float u_sensitivity;
+                    precision mediump float; varying vec2 v_texCoord; uniform sampler2D u_image; 
+                    uniform vec2 u_resolution; uniform float u_sensitivity; 
+                    uniform float u_contrast; uniform float u_noiseGate; uniform int u_invert;
+                    
+                    float getLuma(vec2 offset) {
+                        vec3 rgb = texture2D(u_image, v_texCoord + offset).rgb;
+                        float luma = dot(rgb, vec3(0.299, 0.587, 0.114));
+                        return clamp((luma - 0.5) * u_contrast + 0.5, 0.0, 1.0);
+                    }
+
                     void main() {
                         vec2 step = 1.0 / u_resolution;
                         
-                        // Sample 8 neighbors for edge detection matrix
-                        vec3 tl = texture2D(u_image, v_texCoord + vec2(-step.x, step.y)).rgb; float tll = dot(tl, vec3(0.299, 0.587, 0.114));
-                        vec3 tc = texture2D(u_image, v_texCoord + vec2(0.0, step.y)).rgb; float tcl = dot(tc, vec3(0.299, 0.587, 0.114));
-                        vec3 tr = texture2D(u_image, v_texCoord + vec2(step.x, step.y)).rgb; float trl = dot(tr, vec3(0.299, 0.587, 0.114));
-                        vec3 ml = texture2D(u_image, v_texCoord + vec2(-step.x, 0.0)).rgb; float mll = dot(ml, vec3(0.299, 0.587, 0.114));
-                        vec3 mr = texture2D(u_image, v_texCoord + vec2(step.x, 0.0)).rgb; float mrl = dot(mr, vec3(0.299, 0.587, 0.114));
-                        vec3 bl = texture2D(u_image, v_texCoord + vec2(-step.x, -step.y)).rgb; float bll = dot(bl, vec3(0.299, 0.587, 0.114));
-                        vec3 bc = texture2D(u_image, v_texCoord + vec2(0.0, -step.y)).rgb; float bcl = dot(bc, vec3(0.299, 0.587, 0.114));
-                        vec3 br = texture2D(u_image, v_texCoord + vec2(step.x, -step.y)).rgb; float brl = dot(br, vec3(0.299, 0.587, 0.114));
+                        float tll = getLuma(vec2(-step.x, step.y));
+                        float tcl = getLuma(vec2(0.0, step.y));
+                        float trl = getLuma(vec2(step.x, step.y));
+                        float mll = getLuma(vec2(-step.x, 0.0));
+                        float mrl = getLuma(vec2(step.x, 0.0));
+                        float bll = getLuma(vec2(-step.x, -step.y));
+                        float bcl = getLuma(vec2(0.0, -step.y));
+                        float brl = getLuma(vec2(step.x, -step.y));
 
-                        // Sobel operations
                         float dx = -1.0*tll + 1.0*trl - 2.0*mll + 2.0*mrl - 1.0*bll + 1.0*brl;
                         float dy = -1.0*tll - 2.0*tcl - 1.0*trl + 1.0*bll + 2.0*bcl + 1.0*brl;
                         
                         float edge = sqrt(dx*dx + dy*dy) * u_sensitivity;
+                        
+                        if (edge < u_noiseGate) {
+                            edge = 0.0;
+                        }
+                        
+                        if (u_invert == 1) {
+                            edge = 1.0 - edge;
+                        }
+
                         gl_FragColor = vec4(edge, edge, edge, 1.0);
                     }
                 `;
@@ -500,6 +534,9 @@
                 this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, videoElement);
                 this.gl.uniform2f(this.gl.getUniformLocation(this.program, "u_resolution"), width, height);
                 this.gl.uniform1f(this.gl.getUniformLocation(this.program, "u_sensitivity"), this.sensitivity);
+                this.gl.uniform1f(this.gl.getUniformLocation(this.program, "u_contrast"), this.contrast);
+                this.gl.uniform1f(this.gl.getUniformLocation(this.program, "u_noiseGate"), this.noiseGate);
+                this.gl.uniform1i(this.gl.getUniformLocation(this.program, "u_invert"), this.invert);
                 this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
             }
         };
@@ -750,54 +787,6 @@
                 newImg.src = c.toDataURL();
             },
             
-            // --- UPDATED UPLOAD HANDLER (Handles Image & Video) ---
-            handleUpload(e, mod) {
-                const file = e.target.files[0]; if(!file) return;
-                
-                // Route for Video Processing
-                if (mod === 'xray-vid') {
-                    const videoURL = URL.createObjectURL(file);
-                    const videoEl = document.getElementById('xray-video-source');
-                    videoEl.src = videoURL;
-                    
-                    // FORCE THE BROWSER TO LOAD THE FILE
-                    videoEl.load(); 
-                    
-                    // Use onloadedmetadata instead of onloadeddata (fires instantly)
-                    videoEl.onloadedmetadata = () => {
-                        if (videoEl.duration > 20) {
-                            alert("Warning: Processing clips over 15 seconds may cause memory crashes on mobile browsers.");
-                        }
-                        this.openXRayVideo();
-                    };
-                    
-                    // Fallback in case the metadata fails to load (catch errors)
-                    videoEl.onerror = () => {
-                        alert("Error loading video format. Please ensure it is an MP4, WEBM, or MOV.");
-                    };
-                    
-                    e.target.value = '';
-                    return;
-                }
-
-                // Route for standard images
-                this.module = mod; const r = new FileReader();
-                r.onload = (ev) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        this.image = img; this.tx = { s: 1, px: 0, py: 0 }; 
-                        if(mod === 'dp') { this.resetDP(); this.switch('state-editor'); setTimeout(() => this.waitForDimensions(() => this.renderDP(), 'ui-canvas'), 100); }
-                        if(mod === 'topo') { this.switch('state-topolight'); setTimeout(() => this.waitForDimensions(() => this.initTopo(), 'topo-touch-zone'), 100); }
-                        if(mod === 'grid-prep') { 
-                            this.rgPrepData = { exp: 100, cont: 100, bp: 0, sharp: 0 };
-                            document.getElementById('rg-prep-exp').value = 100; document.getElementById('rg-prep-cont').value = 100;
-                            document.getElementById('rg-prep-bp').value = 0; document.getElementById('rg-prep-sharp').value = 0;
-                            this.switch('state-retrogrid-prep'); setTimeout(() => this.waitForDimensions(() => this.renderRGPrep(), 'rg-prep-touch-zone'), 100); 
-                        }
-                    }; img.src = ev.target.result;
-                }; r.readAsDataURL(file); e.target.value = '';
-            },
-
             waitForDimensions(fn, elementId) {
                 let el = document.getElementById(elementId);
                 let rect = el.parentElement.getBoundingClientRect();
@@ -1291,8 +1280,11 @@
             xrayRecorder: null,
             xrayChunks: [],
 
-            updateXRaySens(v) {
-                XRayEngine.sensitivity = (parseInt(v) / 50.0) * 3.0; 
+            updateXRaySettings() {
+                XRayEngine.sensitivity = (parseInt(document.getElementById('xray-vid-sens').value) / 50.0) * 3.0; 
+                XRayEngine.contrast = parseInt(document.getElementById('xray-vid-cont').value) / 100.0;
+                XRayEngine.noiseGate = parseInt(document.getElementById('xray-vid-gate').value) / 100.0;
+                XRayEngine.invert = document.getElementById('xray-vid-inv').checked ? 1 : 0;
             },
             
             openXRayVideo() {
@@ -1304,8 +1296,12 @@
                 video.play();
                 
                 this.xrayActive = true; 
-                document.getElementById('xray-vid-sens-slider').value = 50;
-                XRayEngine.sensitivity = 3.0;
+                document.getElementById('xray-vid-sens').value = 50;
+                document.getElementById('xray-vid-cont').value = 100;
+                document.getElementById('xray-vid-gate').value = 0;
+                document.getElementById('xray-vid-inv').checked = false;
+                
+                this.updateXRaySettings();
                 
                 setTimeout(() => { this.loopXRayVideo(); }, 100); 
             },
@@ -1397,7 +1393,7 @@
                 };
             },
             
-            // --- UPDATED UPLOAD HANDLER (Handles Image & Video) ---
+            // --- UPLOAD HANDLER ---
             handleUpload(e, mod) {
                 const file = e.target.files[0]; if(!file) return;
                 
@@ -1407,10 +1403,8 @@
                     const videoEl = document.getElementById('xray-video-source');
                     videoEl.src = videoURL;
                     
-                    // FORCE THE BROWSER TO LOAD THE FILE
                     videoEl.load(); 
                     
-                    // Use onloadedmetadata instead of onloadeddata (fires instantly)
                     videoEl.onloadedmetadata = () => {
                         if (videoEl.duration > 20) {
                             alert("Warning: Processing clips over 15 seconds may cause memory crashes on mobile browsers.");
@@ -1418,7 +1412,6 @@
                         this.openXRayVideo();
                     };
                     
-                    // Fallback in case the metadata fails to load (catch errors)
                     videoEl.onerror = () => {
                         alert("Error loading video format. Please ensure it is an MP4, WEBM, or MOV.");
                     };
