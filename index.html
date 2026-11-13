@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Forensics Suite 2.0</title>
+    <title>Forensics Suite 2.1</title>
     <style>
         /* --- CORE CSS --- */
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
@@ -101,6 +101,40 @@
         #shutter-btn:active { transform: scale(0.95); }
     
 .settings-panel{width:100%;max-width:440px;margin:0 auto 18px;font-size:12px;color:#aaa;line-height:1.5}.settings-panel p{margin:7px 0}.utility-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;padding:7px 10px}.utility-row button,.settings-panel button{background:#222;color:#eee;border:1px solid #444;border-radius:8px;padding:8px;cursor:pointer}select{background:#202020;color:#fff;border:1px solid #555;border-radius:6px;padding:5px;max-width:100%}#notice{color:#7dd3fc}.home-content{width:100%;max-width:440px;margin:auto}.module-cards{max-width:440px}#state-home{overflow-y:auto;justify-content:flex-start;padding-top:max(22px,env(safe-area-inset-top))} .app-title{font-size:28px}.app-subtitle{margin-bottom:12px}#guide{position:fixed;inset:0;background:#090b10;z-index:100000;overflow:auto;padding:28px;touch-action:pan-y;user-select:text}#guide article{max-width:740px;margin:auto;line-height:1.65;color:#ddd}#guide h2,#guide h3{margin:18px 0 8px}#guide p,#guide li{margin:8px 0}#guide button{background:#333;color:white;border:1px solid #666;border-radius:8px;padding:10px 20px}#live-info{font-size:10px;color:#ccc}.status-badge{font-size:11px}.ar-bottom-bar{max-height:55%;overflow-y:auto;touch-action:pan-y}.grid-item canvas{position:static;height:100%;width:100%;object-fit:contain}#grid-container{touch-action:pan-y}#grid-modal-label{font-size:11px!important;max-width:30%}.canvas-container{min-height:60px}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #7dd3fc;outline-offset:2px}
+
+/* Synthetic UV: a separate local, deterministic false-color viewer. */
+#state-glow{background:#060810}
+#state-glow .glow-header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px;border-bottom:1px solid #263044;background:#090d17;flex-shrink:0}
+#state-glow button{font:inherit;cursor:pointer;touch-action:manipulation}
+#state-glow .gbtn{border:1px solid #39445e;background:#192235;color:#ecf3ff;border-radius:9px;padding:9px 12px;min-height:40px;font-size:13px}
+#state-glow .gbtn.active{background:#173e57;border-color:#60e2ff;color:#c9f8ff}
+#state-glow .gbtn:disabled{opacity:.4;cursor:default}
+#state-glow .gprimary{background:#203f73;border-color:#659cff}
+#state-glow .gtitle{font-size:15px;color:#dbeeff}
+#state-glow .gsub{font-size:10px;color:#9caecb;display:block;margin-top:3px}
+#glow-zone{min-height:100px;flex:1;background:#080b12;position:relative;overflow:hidden;touch-action:none}
+#glow-canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+#glow-crosshair{position:absolute;display:none;width:21px;height:21px;border:1px solid #fff;border-radius:50%;box-shadow:0 0 0 2px #0008;pointer-events:none;transform:translate(-50%,-50%)}
+#glow-crosshair:before,#glow-crosshair:after{content:'';position:absolute;background:#fff}
+#glow-crosshair:before{width:27px;height:1px;left:-4px;top:9px}
+#glow-crosshair:after{height:27px;width:1px;top:-4px;left:9px}
+#glow-original-badge{position:absolute;top:12px;left:12px;padding:6px 10px;border-radius:6px;background:#05070ddd;color:#fff;font-size:12px;pointer-events:none;display:none}
+.glow-view-tools{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:8px}
+#state-glow .glow-view-tools .gbtn{background:#101a2cdd;min-width:43px;font-size:17px}
+#glow-controls{background:#0c1220;border-top:1px solid #29354b;flex-shrink:0;max-height:47%;overflow:auto;touch-action:pan-y;padding:8px 14px calc(10px + env(safe-area-inset-bottom,0px));overscroll-behavior:contain}
+.glow-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-bottom:8px}
+#state-glow .glow-toggle{font-size:12px;color:#d7e3f5;display:flex;gap:6px;align-items:center;padding:5px}
+#state-glow input[type=checkbox]{accent-color:#66dcff;width:17px;height:17px}
+.glow-sliders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 18px}
+.glow-slider{font-size:12px;color:#c6d4ed;min-width:0;display:block}
+.glow-slider output{float:right;color:#83ddff;font-variant-numeric:tabular-nums}
+#state-glow input[type=range]{width:100%;margin:12px 0 7px;touch-action:pan-x}
+#glow-status{font-size:11px;color:#a8bfdc;line-height:1.45;min-height:16px;margin:8px 0 0}
+.glow-hint{font-size:10px;line-height:1.45;color:#8b9db8;margin-top:6px}
+#glow-hold{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
+@media(min-width:900px){.glow-sliders{grid-template-columns:repeat(5,minmax(0,1fr))}#glow-controls{padding-left:22px;padding-right:22px}}
+@media(max-height:520px){#glow-controls{max-height:44%}.glow-sliders{gap:3px 15px}.glow-hint{display:none}#state-glow .gbtn{padding:5px 8px;min-height:32px}.glow-toolbar{margin-bottom:3px}}
+
 </style>
 </head>
 <body>
@@ -108,7 +142,7 @@
     <div id="state-home" class="app-state active-state">
         <div class="home-content">
             <h1 class="app-title">Forensics Suite</h1>
-            <p class="app-subtitle">Archaeological Image Analysis · v2.0</p>
+            <p class="app-subtitle">Archaeological Image Analysis · v2.1</p>
             
             <div id="workspace-status" style="display: none; background: #111; border: 1px solid #3b82f6; border-radius: 12px; padding: 15px; margin-bottom: 20px; align-items: center; justify-content: space-between; width: 100%; max-width: 350px;">
                 <div style="display: flex; align-items: center; gap: 15px;">
@@ -127,6 +161,12 @@
  <p id="source-status">No image loaded. Processing stays in this browser.</p>
  <p id="notice" role="status" aria-live="polite"></p>
 </div><div class="module-cards">
+                <input type="file" id="file-upload-glow" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="App.handleUpload(event, 'glow')">
+                <button class="module-card" onclick="App.routeTo('glow')" style="border-color:#477bba;background:linear-gradient(110deg,#101d35,#10151f)">
+                 <span class="mod-icon" style="background:#234b76;color:#a8f1ff;font-size:16px">UV</span>
+                 <span class="mod-text"><h3>Synthetic UV</h3><p>Color Glow · reference sampling · trace overlay</p></span>
+                </button>
+                
                 <input type="file" id="file-upload-dp" accept="image/png, image/jpeg" style="display:none" onchange="App.handleUpload(event, 'dp')">
                 <input type="file" id="file-upload-topo" accept="image/png, image/jpeg" style="display:none" onchange="App.handleUpload(event, 'topo')">
                 <input type="file" id="file-upload-grid-prep" accept="image/png, image/jpeg" style="display:none" onchange="App.handleUpload(event, 'grid-prep')">
@@ -422,8 +462,41 @@
     </div>
 
 
+
+<section id="state-glow" class="app-state" aria-label="Synthetic UV viewer">
+ <header class="glow-header">
+  <div class="glow-toolbar" style="margin:0"><button id="glow-home" class="gbtn" onclick="Glow.home()">Home</button><div class="gtitle">Synthetic UV<span class="gsub">False-color enhancement · No AI · Not measured UV</span></div></div>
+  <div class="glow-toolbar" style="margin:0"><button id="glow-save-png" class="gbtn gprimary" onclick="Glow.savePNG()">Save PNG</button><button id="glow-save-json" class="gbtn" disabled onclick="Glow.saveSettings()" title="Settings for the last saved PNG">PNG settings</button></div>
+ </header>
+ <div id="glow-zone">
+  <canvas id="glow-canvas" aria-label="Enhanced image. Drag to pan, pinch or use buttons to zoom."></canvas>
+  <div id="glow-crosshair"></div><div id="glow-original-badge">ORIGINAL · working base</div>
+  <div class="glow-view-tools"><button class="gbtn" onclick="App.zoomMod(1.3)" aria-label="Zoom in">+</button><button class="gbtn" onclick="App.zoomMod(1/1.3)" aria-label="Zoom out">−</button><button class="gbtn" onclick="Glow.fit()" style="font-size:12px">Fit</button></div>
+ </div>
+ <div id="glow-controls">
+  <div class="glow-toolbar">
+   <button id="glow-mode-color" class="gbtn active" onclick="Glow.setMode('color')" aria-pressed="true">Color Glow</button>
+   <button id="glow-mode-reference" class="gbtn" onclick="Glow.setMode('reference')" aria-pressed="false">Reference Glow</button>
+   <button id="glow-sample" class="gbtn" onclick="Glow.armSample()" aria-pressed="false">Sample surface</button>
+   <label class="glow-toggle"><input id="glow-trace" type="checkbox" onchange="Glow.control('trace',this.checked)">Trace Glow</label>
+   <button id="glow-sweep" class="gbtn" onclick="Glow.toggleSweep()" aria-pressed="false">Sweep</button>
+   <button id="glow-hold" class="gbtn" aria-label="Press and hold to compare with the original working base">Hold Original</button>
+   <button class="gbtn" onclick="Glow.reset()">Reset</button>
+  </div>
+  <div class="glow-sliders">
+   <label class="glow-slider">Sensitivity <output id="glow-sensitivity-value">50</output><input id="glow-sensitivity" type="range" min="0" max="100" value="50" oninput="Glow.control('sensitivity',this.value)"></label>
+   <label class="glow-slider">Background Darkness <output id="glow-darkness-value">65</output><input id="glow-darkness" type="range" min="0" max="100" value="65" oninput="Glow.control('darkness',this.value)"></label>
+   <label class="glow-slider">Color Axis <output id="glow-axis-value">0°</output><input id="glow-axis" type="range" min="0" max="359" value="0" oninput="Glow.control('axis',this.value)"></label>
+   <label class="glow-slider">Detail Size <output id="glow-detail-value">6</output><input id="glow-detail" type="range" min="1" max="24" value="6" oninput="Glow.control('detail',this.value)"></label>
+   <label class="glow-slider">Original Blend <output id="glow-blend-value">20%</output><input id="glow-blend" type="range" min="0" max="100" value="20" oninput="Glow.control('blend',this.value)"></label>
+  </div>
+  <p id="glow-status" role="status" aria-live="polite">Preparing viewer…</p>
+  <p class="glow-hint">Drag to pan; pinch or scroll to zoom. Sample surface arms one tap on the unprocessed working image. Sweep rotates Color Axis; Hold freezes the visible result. Original uses exactly the same view, without a split. PNG saves the whole processing image; PNG settings saves its separate JSON.</p>
+ </div>
+</section>
+
 <div id="guide" hidden><article><button onclick="document.getElementById('guide').hidden=true">Close Guide</button>
-<h2>Forensics Suite 2.0</h2><p>A standalone, local-processing archaeological image-analysis application. No uploads to a server, external scripts, or network services are required by this file. Camera access requires browser permission and a secure context (HTTPS or localhost).</p>
+<h2>Forensics Suite 2.1</h2><p>A standalone, local-processing archaeological image-analysis application. No uploads to a server, external scripts, or network services are required by this file. Camera access requires browser permission and a secure context (HTTPS or localhost).</p>
 <h3>Original, working base, and derived output</h3><p>The uploaded original file is retained unchanged for the current session. Save Original downloads those original bytes. Restore Original resets the working base. The blue arrow commits the current processed result as a new working base without changing the session original. Reset View resets the current module, not the original source. Loading a new image starts a new image session. Nothing persists after closing or reloading unless you export it.</p>
 <h3>Resolution and exports</h3><p>Full source is the default. Optional limits reduce processing dimensions explicitly. PNG exports use processing dimensions, never a cropped or zoomed screen canvas. Thumbnail grids alone use smaller previews. Very large images can exceed browser memory; choose a limit if necessary. Brightness-gradient and smoothing operations depend on pixel scale. Export Log records dimensions, settings, transform coefficients, operations, source filename, and a SHA-256 source hash when supported. The log is a provenance aid, not a certified chain of custody or an importable project file.</p>
 <h3>Color enhancement</h3><p>DP computes covariance, sorted eigenvectors, and regularized decorrelation. YUV uses luminance/chroma coordinates; RGB uses native channels; Chroma uses YUV with deliberately reduced luminance gain and increased chroma gain; Opponent uses a reversible brightness/red-difference/blue-difference transform, not CIELAB. Component suppression attenuates the largest-variance principal component, not an independent component and not physical depth. Optional smoothing never replaces the original. Area mode fits and applies the transform inside a selected rectangle. Wand mode samples unprocessed working pixels, fits matching colors, and makes unmatched pixels transparent. Compare shows the current unenhanced working base.</p>
@@ -431,6 +504,8 @@
 <h3>RetroGrid 16</h3><p>All views derive from the same three RGB channels. They are not 16 spectral measurements. Floating-point channel values remain separate from display mapping. Display ranges are fixed: RGB/luminance/value 0–255; hue 0–360 degrees; saturation 0–1; opponent differences −255–255; chroma centered on 128; ratios 0–3; Sobel magnitude mapped with a fixed scale. Ratios above 3 clip in the display only. Near-zero denominators and low-saturation hue require caution. Exports are visualization PNGs, not calibrated radiometric data.</p>
 <h3>Live color view and edge video</h3><p>Live color statistics are locked to the central half-frame when a preset is selected. Refresh Color Reference deliberately refits them. The camera capture retains the full unfiltered frame as the session original. The video module computes Sobel edges with optional smoothing, pre-contrast, sensitivity, threshold and inversion; it does not perform X-ray imaging or temporal detection. Video export records browser playback in real time, is silent, and can drop frames on slow devices or in a background tab. Keep this tab visible. Export depends on browser MediaRecorder and canvas capture support.</p>
 <h3>Interpretation</h3><p>Enhanced colors, relief and edges are visual hypotheses, not chemical identification, buried-feature confirmation, or independent corroboration. Always compare with the original and document processing settings.</p>
+
+<h3>Synthetic UV viewer</h3><p>This is deterministic false-color enhancement of visible-image pixels, not measured ultraviolet fluorescence, spectroscopy, mineral identification, or recovered depth. No AI is used. Color Glow expands opponent-color differences and local detail; Reference Glow suppresses similarity to a patch sampled from the unprocessed working base. Trace Glow overlays absolute multiscale luminance detail, not verified incisions. The blue–cyan–amber palette has no chemical meaning.</p><p>Open Synthetic UV on Home. Adjust Sensitivity and Background Darkness, then rotate Color Axis. Reference Glow: choose Sample surface and tap a patch to suppress; drag and pinch still navigate. Detail Size controls two smoothing scales relative to image size; enable Trace Glow for detail highlighting. Original Blend 100% returns the unchanged processing image. Hold Original shows the unprocessed working base at the exact same zoom/pan; it does not change settings or reset the view. There is no split view. Fit resets navigation only. Sweep rotates Color Axis; Hold freezes the last visible enhanced result. Editing a control, holding Original, leaving the module or hiding the tab stops Sweep.</p><p>The interactive preview is limited to 900 pixels on its long edge (700 on narrow screens). Save PNG recomputes the complete image at the Home processing resolution, not a zoomed screen crop; smaller preview scales can look slightly different. PNG settings downloads a separate JSON describing the last successfully saved PNG, including its frozen parameters, reference patch, dimensions, source metadata and processing description. Changing controls afterward does not change that PNG settings record. No reference patch is painted into the exported image. The session original remains unchanged.</p>
 </article></div>
 <script>
 'use strict';
@@ -491,7 +566,7 @@ const App={
  download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);},
  saveCanvas(c,prefix){if(!c)return;c.toBlob(blob=>{if(blob){this.record('export-image',{module:this.module,width:c.width,height:c.height,settings:this.settings()});this.download(blob,`${prefix}_${Date.now()}.png`);}else alert('PNG export failed; reduce resolution.');},'image/png');},
  settings(){return {module:this.module,preset:this.mat,intensity:this.intensity,dominantSuppression:this.icaDepth,smoothingPasses:this.smooth,tool:this.tool,area:this.box,wand:this.wandCol,tolerance:this.tol,resolutionLimit:this.limit(),dimensions:this.image?{working:[this.image.width,this.image.height],processing:[this.base().width,this.base().height]}:null,transform:this.cache?.valid?{means:this.cache.means,eigenvalues:this.cache.D,eigenvectors:this.cache.V,T:this.cache.T,space:this.cache.space,samples:this.cache.count}:null,topolight:{light:this.topoL,exposure:this.topoExposure,colorOverlay:this.useYRE,edgeMode:this.topoXRay},retrogrid:{channel:this.activeGridChannel,controls:this.controlSettings('rg'),displayRanges:{RGB:[0,255],luminance:[0,255],hueDegrees:[0,360],saturation:[0,1],opponentDifference:[-255,255],ratios:[0,3],edge:'Sobel magnitude / 4, display gain 3',smoothingPasses:2}},video:this.videoSettings,liveReference:this.liveCache?{means:this.liveCache.means,D:this.liveCache.D,V:this.liveCache.V,space:this.liveCache.space}:null};},
- exportSession(){this.record('export-log');this.download(new Blob([JSON.stringify({application:'Forensics Suite',version:'2.0',exported:new Date().toISOString(),source:this.sourceMeta,current:this.settings(),operations:this.log,limitations:'Display enhancement only; not measured depth, chemistry or subsurface imaging. Session log is not an importable project.'},null,2)],{type:'application/json'}),`Forensics_Log_${Date.now()}.json`);},
+ exportSession(){this.record('export-log');this.download(new Blob([JSON.stringify({application:'Forensics Suite',version:'2.1',exported:new Date().toISOString(),source:this.sourceMeta,current:this.settings(),operations:this.log,limitations:'Display enhancement only; not measured depth, chemistry or subsurface imaging. Session log is not an importable project.'},null,2)],{type:'application/json'}),`Forensics_Log_${Date.now()}.json`);},
  changeResolution(){this.cache={valid:false};this.box=null;this.wandCol=null;this.baseKey=null;this.dpKey=null;this.gridKey=null;this.topoKey=null;this.record('resolution-changed',{limit:this.limit()});this.updateHomeUI();},
  closeToHome(){this.module=null;this.switch('state-home');this.updateHomeUI();},
  routeTo(mod){if(mod==='ar'){this.openAR();return;}if(!this.image){$('file-upload-'+mod).click();return;}this.module=mod;this.tx={s:1,px:0,py:0};if(mod==='dp'){this.resetDP();this.switch('state-editor');}if(mod==='topo'){this.useYRE=false;this.topoXRay=false;this.topoL={x:0,y:0,z:1};this.topoExposure=1.5;$('topo-yre-toggle').checked=false;$('topo-xray-toggle').checked=false;this.topoKey=null;this.switch('state-topolight');}if(mod==='grid-prep'){for(const [k,v] of Object.entries({exp:100,cont:100,bp:0,sharp:0}))$('rg-prep-'+k).value=v;this.switch('state-retrogrid-prep');}requestAnimationFrame(()=>this.renderCurrent());},
@@ -577,6 +652,263 @@ Object.assign(App,{
 });
 document.addEventListener('DOMContentLoaded',()=>App.init());
 window.addEventListener('pagehide',()=>{App.stopCamera();if(App.xrayRecorder?.state==='recording')App.xrayRecorder.stop();});
+
+</script>
+<script>
+
+/* Synthetic UV extension. No requests, libraries, learned models, or generated image content. */
+(()=>{
+'use strict';
+const defaults=()=>({mode:'color',sensitivity:50,darkness:65,axis:0,detail:6,blend:20,trace:false,reference:null});
+const compute=function glowCompute(job, cache) {
+ const {width:w,height:h,key,settings:p}=job;
+ const n=w*h;
+ if(job.pixels){cache.key=key;cache.w=w;cache.h=h;cache.raw=new Uint8ClampedArray(job.pixels);cache.detailKey=null;}
+ if(cache.key!==key||!cache.raw)throw Error('Source image was not available. Reopen the viewer.');
+ const raw=cache.raw;
+ const bound=(v,lo=0,hi=1)=>Math.max(lo,Math.min(hi,v));
+ const blur=(a,r)=>{
+  const tmp=new Float32Array(n),out=new Float32Array(n),den=2*r+1;
+  for(let y=0;y<h;y++){const row=y*w;let sum=0;for(let k=-r;k<=r;k++)sum+=a[row+bound(k,0,w-1)];for(let x=0;x<w;x++){tmp[row+x]=sum/den;sum+=a[row+bound(x+r+1,0,w-1)]-a[row+bound(x-r,0,w-1)];}}
+  for(let x=0;x<w;x++){let sum=0;for(let k=-r;k<=r;k++)sum+=tmp[bound(k,0,h-1)*w+x];for(let y=0;y<h;y++){out[y*w+x]=sum/den;sum+=tmp[bound(y+r+1,0,h-1)*w+x]-tmp[bound(y-r,0,h-1)*w+x];}}
+  return out;
+ };
+ if(!cache.y){cache.detailKey=null;}
+ if(cache.statsKey!==key){
+  cache.y=new Float32Array(n);const sums=[0,0,0],sq=[0,0,0];let count=0;
+  for(let i=0;i<n;i++){const j=i*4,r=raw[j]/255,g=raw[j+1]/255,b=raw[j+2]/255,Y=.299*r+.587*g+.114*b;cache.y[i]=Y;if(raw[j+3]&&i%Math.max(1,Math.floor(n/60000))===0){const vals=[Y,(b-Y)*.565,(r-Y)*.713];for(let k=0;k<3;k++){sums[k]+=vals[k];sq[k]+=vals[k]*vals[k];}count++;}}
+  count=Math.max(1,count);cache.mean=sums.map(v=>v/count);cache.std=sq.map((v,k)=>Math.max(k===0?.055:.025,Math.sqrt(Math.max(0,v/count-cache.mean[k]*cache.mean[k]))));cache.statsKey=key;
+ }
+ const radius=Math.max(1,Math.round(p.detail*Math.max(w,h)/1000));
+ if(cache.detailKey!==key+':'+radius){
+  cache.fine=blur(cache.y,radius);cache.broad=blur(cache.y,Math.max(radius+1,radius*3));cache.detailKey=key+':'+radius;
+ }
+ const output=new Uint8ClampedArray(raw.length),angle=p.axis*Math.PI/180,ca=Math.cos(angle),sa=Math.sin(angle),gain=.4+5.6*p.sensitivity/100,dark=p.darkness/100,mix=p.blend/100;
+ const ref=p.reference&&p.mode==='reference'?p.reference.rgb.map(v=>v/255):null;
+ const refY=ref?.length?(.299*ref[0]+.587*ref[1]+.114*ref[2]):cache.mean[0];
+ const refU=ref?(.565*(ref[2]-refY)):cache.mean[1],refV=ref?(.713*(ref[0]-refY)):cache.mean[2];
+ const threshold=.035+dark*.53,mean=cache.mean,std=cache.std;
+ for(let i=0;i<n;i++){
+  const j=i*4;
+  if(mix===1){output[j]=raw[j];output[j+1]=raw[j+1];output[j+2]=raw[j+2];output[j+3]=raw[j+3];continue;}
+  const r=raw[j]/255,g=raw[j+1]/255,b=raw[j+2]/255,Y=cache.y[i];
+  const u=(.565*(b-Y)-refU)/std[1],v=(.713*(r-Y)-refV)/std[2];
+  const x=ca*u+sa*v,z=-sa*u+ca*v;
+  const local=(cache.fine[i]-cache.broad[i])/Math.max(.035,std[0]*.55);
+  let response=Math.sqrt(x*x+.22*z*z)*.40;
+  if(ref)response+=Math.abs(Y-refY)/std[0]*.20;
+  else response+=Math.abs(local)*.20;
+  const intensity=1-Math.exp(-Math.max(0,response*gain-threshold));
+  const t=.5+.5*Math.tanh(x*.85);
+  let cr,cg,cb;
+  if(t<.5){const a=t*2;cr=.12*(1-a);cg=.23+.65*a;cb=1;}
+  else{const a=(t-.5)*2;cr=a;cg=.88-.28*a;cb=1-.94*a;}
+  const floor=Y*.26*(1-dark);
+  let R=floor+cr*intensity,G=floor+cg*intensity,B=floor+cb*intensity;
+  if(p.trace){
+   const trace=1-Math.exp(-Math.max(0,Math.abs(local)*gain*.90-(.12+dark*.32)));
+   R=1-(1-bound(R))*(1-trace*.42);G=1-(1-bound(G))*(1-trace*.95);B=1-(1-bound(B))*(1-trace);
+  }
+  output[j]=255*(bound(R)*(1-mix)+r*mix);output[j+1]=255*(bound(G)*(1-mix)+g*mix);output[j+2]=255*(bound(B)*(1-mix)+b*mix);output[j+3]=raw[j+3];
+ }
+ return {pixels:output.buffer,width:w,height:h,radius};
+};
+const workerSource='const compute='+compute.toString()+';let cache={};self.onmessage=e=>{const j=e.data;try{const r=compute(j,cache);self.postMessage({id:j.id,...r},[r.pixels]);}catch(err){self.postMessage({id:j.id,error:err.message});}};';
+const G={
+ state:defaults(),shown:null,shownState:null,compare:false,sweep:false,sampleArmed:false,ready:false,generation:0,requestId:0,waiters:new Map(),fallbackCache:{},workerKey:null,busy:false,want:false,exporting:false,lastExport:null,sourceKey:null,
+ init(){
+  this.bindView();this.bindCompare();
+  window.addEventListener('blur',()=>{this.releaseOriginal();this.holdSweep();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){this.releaseOriginal();this.holdSweep();}});
+  window.addEventListener('pagehide',()=>{this.holdSweep();this.worker?.terminate();});
+  this.sync();
+ },
+ makeWorker(){
+  if(this.worker||this.fallback)return;
+  try{
+   if(!window.Worker)throw Error('Worker unavailable');
+   const url=URL.createObjectURL(new Blob([workerSource],{type:'text/javascript'}));
+   this.worker=new Worker(url);URL.revokeObjectURL(url);
+   this.worker.onmessage=e=>{const r=e.data,q=this.waiters.get(r.id);if(q){clearTimeout(q.timeout);this.waiters.delete(r.id);r.error?q.reject(Error(r.error)):q.resolve(r);}};
+   this.worker.onerror=e=>{e.preventDefault();this.worker?.terminate();this.worker=null;this.fallback=true;this.workerKey=null;for(const q of this.waiters.values()){clearTimeout(q.timeout);q.reject(Error('Background processor unavailable. Adjust a control to retry in compatibility mode.'));}this.waiters.clear();};
+  }catch(e){this.fallback=true;}
+ },
+ async process(canvas,key,settings){
+  this.makeWorker();const job={id:++this.requestId,key,width:canvas.width,height:canvas.height,settings};
+  if(this.workerKey!==key){job.pixels=F.pixels(canvas).data.buffer;this.workerKey=key;}
+  if(this.fallback){await new Promise(r=>setTimeout(r,0));return compute(job,this.fallbackCache);}
+  return new Promise((resolve,reject)=>{
+   const timeout=setTimeout(()=>{this.waiters.delete(job.id);this.workerKey=null;reject(Error('Processing timed out. Try a lower resolution.'));},120000);
+   this.waiters.set(job.id,{resolve,reject,timeout});
+   try{this.worker.postMessage(job,job.pixels?[job.pixels]:[]);}catch(e){clearTimeout(timeout);this.waiters.delete(job.id);this.workerKey=null;reject(e);}
+  });
+ },
+ open(){
+  if(!App.image){$('file-upload-glow').click();return;}
+  this.holdSweep();this.compare=false;this.sampleArmed=false;
+  const key=App.revision+':'+App.limit();
+  if(this.sourceKey!==key){this.state=defaults();this.sourceKey=key;this.shown=null;this.shownState=null;this.generation++;this.lastExport=null;$('glow-save-json').disabled=true;}
+  this.source=App.base();this.preview=F.copy(this.source,Math.min(900,window.innerWidth<600?700:900));
+  this.previewKey='preview:'+key+':'+this.preview.width+'x'+this.preview.height;
+  App.module='glow';App.tx={s:1,px:0,py:0};App.switch('state-glow');this.ready=true;this.sync();this.draw();this.render();
+ },
+ home(){if(this.exporting)return;this.holdSweep();this.sampleArmed=false;this.releaseOriginal();this.generation++;this.want=false;App.closeToHome();},
+ snapshot(){return JSON.parse(JSON.stringify(this.state));},
+ sync(){
+  for(const k of ['sensitivity','darkness','axis','detail','blend']){
+   $("glow-"+k).value=Math.round(this.state[k]);$('glow-'+k+'-value').textContent=Math.round(this.state[k])+(k==='axis'?'°':k==='blend'?'%':'');
+  }
+  $('glow-trace').checked=this.state.trace;
+  for(const m of ['color','reference']){$('glow-mode-'+m).classList.toggle('active',this.state.mode===m);$('glow-mode-'+m).setAttribute('aria-pressed',String(this.state.mode===m));}
+  $('glow-sample').classList.toggle('active',this.sampleArmed);$('glow-sample').setAttribute('aria-pressed',String(this.sampleArmed));$('glow-sample').textContent=this.sampleArmed?'Tap image…':this.state.reference?'Resample surface':'Sample surface';
+  $('glow-sweep').textContent=this.sweep?'Hold':'Sweep';$('glow-sweep').classList.toggle('active',this.sweep);$('glow-sweep').setAttribute('aria-pressed',String(this.sweep));
+  $('glow-zone').style.cursor=this.sampleArmed?'crosshair':'grab';
+ },
+ status(text){if($('glow-status').textContent!==text)$('glow-status').textContent=text;},
+ summary(){
+  const size=this.preview?this.preview.width+' × '+this.preview.height:'';
+  const r=this.state.reference;
+  return (this.state.mode==='reference'?(r?'Reference Glow · sampled unprocessed pixels':'Reference Glow · choose Sample surface, then tap the image'):'Color Glow')+(this.state.trace?' + Trace':'')+' · Preview '+size+(this.fallback?' · Compatibility processing':'')+(this.lastExport?' · PNG settings refers to the last saved PNG.':'');
+ },
+ control(k,value){
+  this.holdSweep();this.state[k]=k==='trace'?!!value:Number(value);this.generation++;this.sync();this.render();
+ },
+ setMode(m){this.holdSweep();this.state.mode=m;this.sampleArmed=m==='reference'&&!this.state.reference;this.generation++;this.sync();this.render();},
+ armSample(){this.holdSweep();this.sampleArmed=!this.sampleArmed;this.sync();this.status(this.sampleArmed?'Tap a background patch to suppress. Drag still pans; pinch still zooms.':this.summary());},
+ sampleAt(x,y){
+  const b=App.base();x=Math.floor(x);y=Math.floor(y);if(x<0||y<0||x>=b.width||y>=b.height)return;
+  const radius=Math.max(1,Math.min(24,Math.round(Math.max(b.width,b.height)/600)));
+  const x0=Math.max(0,x-radius),y0=Math.max(0,y-radius),x1=Math.min(b.width,x+radius+1),y1=Math.min(b.height,y+radius+1);
+  const data=b.getContext('2d',{willReadFrequently:true}).getImageData(x0,y0,x1-x0,y1-y0).data;
+  const rgb=[0,0,0];let count=0;for(let i=0;i<data.length;i+=4){if(!data[i+3])continue;count++;for(let k=0;k<3;k++)rgb[k]+=data[i+k];}
+  if(!count){this.status('That patch is transparent. Tap a visible surface.');return;}
+  this.state.reference={rgb:rgb.map(v=>v/count),x,y,radius,patch:[x0,y0,x1-x0,y1-y0],pixels:count,source:'unprocessed working base',dimensions:[b.width,b.height]};
+  this.state.mode='reference';this.sampleArmed=false;this.generation++;App.record('synthetic-uv-reference',{reference:this.state.reference});this.sync();this.render();
+ },
+ render(){
+  if(App.module!=='glow'||!this.ready)return;
+  this.want=true;
+  if(this.busy||this.exporting)return;
+  this.refresh();
+ },
+ async refresh(){
+  if(!this.want||App.module!=='glow'||this.exporting)return;
+  this.want=false;this.busy=true;const gen=this.generation,params=this.snapshot(),key=this.previewKey;
+  this.status(this.sweep?'Sweeping Color Axis · press Hold to freeze.':'Updating preview…');
+  try{
+   const result=await this.process(this.preview,key,params);
+   if(gen===this.generation&&App.module==='glow'&&key===this.previewKey){
+    this.shown=F.fromPixels(new ImageData(new Uint8ClampedArray(result.pixels),result.width,result.height));this.shownState=params;this.shownRadius=result.radius;this.draw();
+    this.status(this.sweep?'Sweeping Color Axis · press Hold to freeze.':this.summary());
+   }
+  }catch(e){if(App.module==='glow')this.status(e.message);}
+  finally{
+   this.busy=false;
+   if(this.want&&App.module==='glow'&&!this.exporting)requestAnimationFrame(()=>this.refresh());
+   else if(this.sweep&&App.module==='glow')this.scheduleSweep();
+  }
+ },
+ toggleSweep(){
+  if(this.sweep){this.holdSweep();return;}
+  this.sampleArmed=false;this.sweep=true;this.sync();this.status('Sweeping Color Axis · press Hold to freeze.');
+  this.scheduleSweep();
+ },
+ scheduleSweep(){
+  clearTimeout(this.sweepTimer);if(!this.sweep||App.module!=='glow')return;
+  this.sweepTimer=setTimeout(()=>{
+   if(!this.sweep||App.module!=='glow')return;
+   if(this.busy||this.exporting){this.scheduleSweep();return;}
+   this.state.axis=(this.state.axis+5)%360;this.sync();this.render();
+  },140);
+ },
+ holdSweep(){
+  if(!this.sweep)return;
+  this.sweep=false;clearTimeout(this.sweepTimer);this.generation++;this.want=false;
+  if(this.shownState)this.state.axis=this.shownState.axis;
+  this.sync();this.draw();this.status(this.summary());if(!this.shownState)this.render();
+ },
+ reset(){this.holdSweep();this.state=defaults();this.sampleArmed=false;this.compare=false;this.generation++;App.tx={s:1,px:0,py:0};this.sync();this.render();},
+ fit(){App.tx={s:1,px:0,py:0};this.draw();},
+ draw(){
+  if(App.module!=='glow'||!this.preview)return;
+  const c=$('glow-canvas'),zone=$('glow-zone'),r=zone.getBoundingClientRect(),q=window.devicePixelRatio||1,w=Math.max(1,Math.round(r.width*q)),h=Math.max(1,Math.round(r.height*q));
+  if(c.width!==w||c.height!==h){c.width=w;c.height=h;}
+  const ctx=c.getContext('2d');ctx.clearRect(0,0,w,h);
+  const b=this.source,fit=Math.min(w/b.width,h/b.height)*App.tx.s,im=this.compare?this.preview:(this.shown||this.preview);
+  ctx.save();ctx.translate(w/2+App.tx.px*q,h/2+App.tx.py*q);ctx.scale(fit,fit);ctx.drawImage(im,-b.width/2,-b.height/2,b.width,b.height);ctx.restore();
+  $('glow-original-badge').style.display=this.compare?'block':'none';
+  const mark=$('glow-crosshair'),ref=this.state.reference;
+  if(ref){const x=(w/2+App.tx.px*q+(ref.x+.5-b.width/2)*fit)/q,y=(h/2+App.tx.py*q+(ref.y+.5-b.height/2)*fit)/q;mark.style.display=x>=0&&x<=r.width&&y>=0&&y<=r.height?'block':'none';mark.style.left=x+'px';mark.style.top=y+'px';}else mark.style.display='none';
+ },
+ bindCompare(){
+  const b=$('glow-hold');
+  const start=e=>{if(e?.button&&e.button!==0)return;e?.preventDefault();if(e?.pointerId!==undefined){try{b.setPointerCapture(e.pointerId);}catch(_){}}this.holdSweep();this.compare=true;b.classList.add('active');this.draw();};
+  const end=()=>this.releaseOriginal();
+  b.addEventListener('pointerdown',start);for(const type of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(type,end);
+  b.addEventListener('keydown',e=>{if(e.code==='Space'||e.code==='Enter'){if(!e.repeat)start(e);e.preventDefault();}});
+  b.addEventListener('keyup',e=>{if(e.code==='Space'||e.code==='Enter'){e.preventDefault();end();}});b.addEventListener('blur',end);b.addEventListener('contextmenu',e=>e.preventDefault());
+ },
+ releaseOriginal(){this.compare=false;$('glow-hold')?.classList.remove('active');this.draw();},
+ bindView(){
+  const el=$('glow-zone'),pts=new Map();let single=null,pinch=null;
+  const pair=()=>{const a=[...pts.values()];return{distance:Math.max(1,Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)),x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2};};
+  el.addEventListener('pointerdown',e=>{
+   if(e.target.closest('button')||!this.ready||e.button>0)return;e.preventDefault();el.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+   if(pts.size===1){single={x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY,moved:false};pinch=null;}
+   else if(pts.size===2){if(single)single.moved=true;pinch={...pair(),tx:{...App.tx}};}
+  });
+  el.addEventListener('pointermove',e=>{
+   if(!pts.has(e.pointerId))return;e.preventDefault();pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+   if(pts.size===2&&pinch){const p=pair();App.tx.s=clamp(pinch.tx.s*p.distance/pinch.distance,.25,32);App.tx.px=pinch.tx.px+p.x-pinch.x;App.tx.py=pinch.tx.py+p.y-pinch.y;this.draw();}
+   else if(pts.size===1&&single){if(Math.hypot(e.clientX-single.x,e.clientY-single.y)>5)single.moved=true;if(single.moved){App.tx.px+=e.clientX-single.lastX;App.tx.py+=e.clientY-single.lastY;this.draw();}single.lastX=e.clientX;single.lastY=e.clientY;}
+  });
+  el.addEventListener('pointerup',e=>{
+   if(!pts.has(e.pointerId))return;
+   if(pts.size===1&&single&&!single.moved&&this.sampleArmed){const p=App.position(e,el);this.sampleAt(p.x,p.y);}
+   pts.delete(e.pointerId);if(pts.size===1){const a=[...pts.values()][0];single={x:a.x,y:a.y,lastX:a.x,lastY:a.y,moved:true};}else if(!pts.size)single=null;pinch=null;
+  });
+  const cancel=()=>{pts.clear();single=null;pinch=null;};el.addEventListener('pointercancel',cancel);window.addEventListener('blur',cancel);
+  el.addEventListener('wheel',e=>{e.preventDefault();App.zoomMod(e.deltaY<0?1.12:1/1.12);},{passive:false});el.addEventListener('contextmenu',e=>e.preventDefault());
+ },
+ manifest(params,output,name,radius){
+  return {application:'Forensics Suite',version:'2.1',module:'Synthetic UV',algorithmVersion:'synthetic-uv-1.0',created:new Date().toISOString(),png:name,
+   interpretation:'Deterministic false-color enhancement of visible RGB pixels. No measured UV excitation, fluorescence, spectra, mineral identification, physical depth, or AI.',
+   mode:params.mode==='reference'?'Reference Glow':'Color Glow',settings:params,
+   controls:{sensitivity:'0–100; gain = 0.4 + 5.6 * value/100',darkness:'0–100; threshold = 0.035 + 0.53 * value/100',axis:'degrees of opponent-color rotation; also controls palette and directional color emphasis',detail:'1–24; small box radius = max(1, round(value * processing long edge / 1000)); broad radius = max(radius+1,3*radius)',blend:'0 = enhanced; 100 = unchanged processing pixels',trace:'absolute small-scale minus broad-scale luminance, cyan screen overlay'},
+   source:App.sourceMeta?JSON.parse(JSON.stringify(App.sourceMeta)):null,workingBase:{revision:App.revision,width:this.source.width,height:this.source.height,resolutionLimit:App.limit()},
+   output:{width:output.width,height:output.height,format:'PNG',fullProcessingFrame:true,croppedToView:false,detailRadius:radius,broadRadius:Math.max(radius+1,radius*3),alpha:'preserved from input'},
+   preview:{width:this.preview.width,height:this.preview.height,description:'Reduced-resolution interactive preview; export recomputes at processing dimensions, so fine-scale appearance can vary.'},
+   viewAtExport:{...App.tx,comparisonHeld:this.compare},sweep:{running:false,parameter:'Color Axis',stepDegrees:5},pipeline:['visible RGB luminance and opponent-color differences','sampled global means and standard deviations with floors','two edge-clamped separable box blurs','rotated color contrast and optional reference brightness difference','blue–cyan–amber false-color mapping','optional absolute-bandpass Trace Glow','original blend'],
+   provenance:JSON.parse(JSON.stringify(App.log))};
+ },
+ async savePNG(){
+  if(this.exporting||!this.ready)return;
+  this.holdSweep();this.sampleArmed=false;this.sync();
+  if(this.state.mode==='reference'&&!this.state.reference){this.sampleArmed=true;this.sync();this.status('Sample a surface before exporting Reference Glow.');return;}
+  this.exporting=true;$('glow-home').disabled=true;$('glow-save-png').disabled=true;this.status('Rendering whole processing image for PNG…');
+  const controls=[...$('glow-controls').querySelectorAll('button,input')],previous=controls.map(e=>e.disabled);controls.forEach(e=>e.disabled=true);
+  try{
+   const params=this.snapshot(),base=this.source,stamp=new Date().toISOString().replace(/[:.]/g,'-'),name='SyntheticUV_'+stamp+'.png';
+   const result=await this.process(base,'full:'+this.sourceKey,params);
+   const out=F.fromPixels(new ImageData(new Uint8ClampedArray(result.pixels),result.width,result.height));
+   const blob=await new Promise(resolve=>out.toBlob(resolve,'image/png'));if(!blob)throw Error('PNG export failed. Choose a lower processing resolution on Home.');
+   const manifest=this.manifest(params,out,name,result.radius);manifest.output.bytes=blob.size;
+   this.lastExport={name:name.replace(/\.png$/,'.settings.json'),json:JSON.stringify(manifest,null,2)};
+   App.record('synthetic-uv-export',{filename:name,settings:params,width:out.width,height:out.height});App.download(blob,name);$('glow-save-json').disabled=false;
+   this.status('PNG saved: '+out.width+' × '+out.height+'. Use PNG settings for its separate JSON.');
+   out.width=1;out.height=1;
+  }catch(e){this.status('Export failed: '+e.message);this.workerKey=null;}
+  finally{this.exporting=false;$('glow-home').disabled=false;$('glow-save-png').disabled=false;controls.forEach((e,i)=>e.disabled=previous[i]);if(this.want)this.refresh();}
+ },
+ saveSettings(){if(this.lastExport)App.download(new Blob([this.lastExport.json],{type:'application/json'}),this.lastExport.name);}
+};
+window.Glow=G;
+const oldRoute=App.routeTo.bind(App);App.routeTo=function(mod){if(mod==='glow')G.open();else oldRoute(mod);};
+const oldRender=App.renderCurrent.bind(App);App.renderCurrent=function(){if(this.module==='glow')G.draw();else oldRender();};
+const oldSettings=App.settings.bind(App);App.settings=function(){return {...oldSettings(),syntheticUV:G.snapshot()};};
+const oldSource=App.newSource.bind(App);App.newSource=async function(...args){G.holdSweep();G.ready=false;G.sourceKey=null;G.generation++;G.lastExport=null;$('glow-save-json').disabled=true;return oldSource(...args);};
+document.addEventListener('DOMContentLoaded',()=>G.init());
+})();
 
 </script>
 </body>
